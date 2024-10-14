@@ -10,3 +10,9 @@ services:
       - ./mosquitto/log:/mosquitto/log
     restart: unless-stopped
 
+  mqtt_publisher:
+    build: ./publisher
+    container_name: mqtt_publisher
+    depends_on:
+      - mosquitto
+    restart: unless-stopped
