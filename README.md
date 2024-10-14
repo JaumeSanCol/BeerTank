@@ -5,7 +5,7 @@ Project to automate a beer tank.
 ## Authors
 - Alexandre Correia
 - Emanuel Gestosa
-- Jaume ...
+- Jaume Sansano
 - José Gaspar
 - Miguel Teixeira
 - Lorenzo Piarulli
