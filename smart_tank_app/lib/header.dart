@@ -1,6 +1,7 @@
 // File: header.dart
 
 import 'package:flutter/material.dart';
+import 'login_page.dart';
 import 'main.dart';
 import 'genTokens.dart';
 
@@ -71,6 +72,18 @@ class HeaderDrawer extends StatelessWidget {
             title: const Text('About'),
             onTap: () {
               // Navigate to About Page
+            },
+          ),
+          const Divider(),
+          // Add the Logout option
+          ListTile(
+            leading: const Icon(Icons.logout),
+            title: const Text('Logout'),
+            onTap: () {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => const LoginPage()),
+              );
             },
           ),
         ],
