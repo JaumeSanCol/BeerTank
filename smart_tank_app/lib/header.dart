@@ -2,7 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'main.dart';
-
+import 'genTokens.dart';
 
 class Header extends StatelessWidget implements PreferredSizeWidget {
   final String title;
@@ -41,7 +41,7 @@ class HeaderDrawer extends StatelessWidget {
           ),
           ListTile(
             leading: const Icon(Icons.home),
-            title: const Text('Home'),
+            title: const Text('MyTokens'),
             onTap: () {
               Navigator.push(
                 context,
@@ -57,10 +57,13 @@ class HeaderDrawer extends StatelessWidget {
             },
           ),
           ListTile(
-            leading: const Icon(Icons.settings),
-            title: const Text('Settings'),
+            leading: const Icon(Icons.token), // Custom icon for token generation
+            title: const Text('Generate Tokens'),
             onTap: () {
-              // Navigate to Settings Page
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const GenTokensPage()),
+              );
             },
           ),
           ListTile(
