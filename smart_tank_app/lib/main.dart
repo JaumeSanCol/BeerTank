@@ -78,9 +78,9 @@ class _MyHomePageState extends State<MyHomePage> {
   // The idea here is to load the tokens into this map from the server and keep track of the selection status
   // currently this has placeholder values
   Map<Token, bool> tokenSelectionStatus = {
-    Token('100', '1', true, false): false,
-    Token('200', '2', false, false): false,
-    Token('300', '3', false, true): false,
+    Token('100', '1', 'user1', true, false): false,
+    Token('200', '2', 'user1', false, false): false,
+    Token('300', '3', 'user1',false, true): false,
   };
 
 
