@@ -11,21 +11,24 @@
 class Token {
   final String id;
   final String establishmentId;
+  final String customerId;
   bool isActive;
   bool isLoaded;
 
   /// Creates a new Token with the given ID, establishment ID, active status, and loaded status.
-  Token(this.id, this.establishmentId, this.isActive, this.isLoaded);
+  Token(this.id, this.establishmentId, this.customerId, this.isActive, this.isLoaded);
 
   Token.fromJson(Map<String, dynamic> json)
       : id = json['id'],
         establishmentId = json['establishmentId'],
+        customerId = json['customerId'],
         isActive = json['isActive'],
         isLoaded = json['isLoaded'];
   
   Map<String, dynamic> toJson() => {
     'id': id,
     'establishmentId': establishmentId,
+    'customerId': customerId,
     'isActive': isActive,
     'isLoaded': isLoaded,
   };
@@ -38,6 +41,8 @@ class Token {
   /// Returns:
   ///   - `bool`: The new state of the `isActive` variable.
   bool toggleActive() {
+    //TODO: should connect to the server to update the status of the token
+
     isActive = !isActive;
     return isActive;
   }
@@ -50,6 +55,8 @@ class Token {
   /// Returns:
   ///   - `bool`: The new state of the `isLoaded` variable.
   bool toggleLoaded() {
+    //TODO: should connect to the server to update the status of the token
+
     isLoaded = !isLoaded;
     return isLoaded;
   }
