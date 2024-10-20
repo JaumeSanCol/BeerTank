@@ -1,17 +1,29 @@
 #include "SPI.h"
 #include "MFRC522.h"
+#include <vector>
+#include <string.h> 
 
 #define RST_PIN  9 // RES pin
 #define SS_PIN  10 // SDA (SS) pin
-#define LED_PIN 7 
+#define LED_PIN 6
 
 MFRC522 mfrc522(SS_PIN, RST_PIN);
 
 byte smallcup[7] = {4,197,86,97,16,2,136}; 
 byte bigcup[7] = {4,127,179,222,16,1,137};
 
+
+struct UID {
+  std::string name;
+  byte uid[7];
+};
+
+std::vector<UID> UIDs;
+
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(19200);
+  Serial.println("here");
+  
   SPI.begin();
   mfrc522.PCD_Init();
   delay(4);
@@ -20,9 +32,22 @@ void setup() {
 
   pinMode(LED_PIN, OUTPUT);
   digitalWrite(LED_PIN, LOW);
+
+  //TEST POPULATION
+  byte sbyte[7] = {4,197,86,97,16,2,136};
+  byte bbyte[7] = {4,127,179,222,16,1,137};
+  UID small;
+  UID big;
+  small.name = "smallcup";
+  big.name = "bigcup";
+  memcpy(small.uid, sbyte, 7);
+  memcpy(big.uid, bbyte, 7);
+  UIDs.push_back(small);
+  UIDs.push_back(big);
 }
 
 void loop() {
+
   // reset del ciclo quando nessuna scheda è inserita nel lettore
   if ( ! mfrc522.PICC_IsNewCardPresent()) {
      return;
@@ -51,27 +76,34 @@ void loop() {
 bool compareUID(byte* buffer, byte buffersize){
   if(buffersize != 7){
     Serial.println("Error! UID with differnt size");
-    return;
+    return 0;
   }
 
-  bool exists1 = true;
-  for(int i = 0; i<buffersize; i++){
-    if(buffer[i] != smallcup[i]){
-      exists1 = false;
+  std::string result= "none";
+  for(int j = 0; j<UIDs.size(); j++){
+    bool found = true;
+    for(int i = 0; i<buffersize; i++){
+      Serial.print(buffer[i]);
+      Serial.print("-");
+      Serial.print(UIDs[j].uid[i]);
+      Serial.print(":");
+      if(buffer[i] != UIDs[j].uid[i]){
+        Serial.println("not equal");
+        found = false;
+        break;
+      }  
+    }
+    if(found){
+      result = UIDs[j].name;
       break;
     }
   }
-  
-  bool exists2 = true;
-  for(int i = 0; i<buffersize; i++){
-    if(buffer[i] != bigcup[i]){
-      exists2 = false;
-      break;
-    }
+
+  if(result == "none"){
+    return false;
+  } else {
+    return true;
   }
-
-  return exists1 || exists2;
-
 }
 
 void printUID(byte* buffer, byte buffersize){
