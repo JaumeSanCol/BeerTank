@@ -53,7 +53,24 @@ class _LoadTokenPageState extends State<LoadTokenPage> {
       }
       
       // Transfer data
-      
+      _transferData().then(
+        (transferStatus) {
+          Navigator.of(context).pop();
+          print('Data transfer: $transferStatus');
+          if (transferStatus) {
+            _nfcDialog = successNFCWriteDialog(context);
+          } else {
+            _nfcDialog = failureNFCWriteDialog(context);
+          }
+          showDialog(
+            context: context,
+            barrierDismissible: true,
+            builder: (BuildContext context) {
+              return _nfcDialog;
+            },
+          );
+        },
+      );
       }
     );
   }
