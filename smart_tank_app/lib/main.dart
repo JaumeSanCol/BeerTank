@@ -83,6 +83,7 @@ class _MyHomePageState extends State<MyHomePage> {
     Token('300', '3', false, true): false,
   };
 
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -103,10 +104,16 @@ class _MyHomePageState extends State<MyHomePage> {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                ElevatedButton(
-                  onPressed: _selectAll,
-                  child: const Text('Select All'),
-                ),
+                if (tokenSelectionStatus.values.contains(true))
+                  ElevatedButton(
+                    onPressed: _deselectAll,
+                    child: const Text('Deselect All'),
+                  )
+                else
+                  ElevatedButton(
+                    onPressed: _selectAll,
+                    child: const Text('Select All'),
+                  )
               ],
             ),
             // Using LayoutBuilder to dynamically fit the table into the screen
