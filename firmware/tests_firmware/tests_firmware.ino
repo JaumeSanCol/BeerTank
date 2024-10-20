@@ -7,6 +7,7 @@
 #define SS_PIN  10 // SDA (SS) pin
 #define LED_PIN 6
 
+//RFID
 MFRC522 mfrc522(SS_PIN, RST_PIN);
 
 byte smallcup[7] = {4,197,86,97,16,2,136}; 
@@ -20,10 +21,18 @@ struct UID {
 
 std::vector<UID> UIDs;
 
+//FLOW SENSOR
+byte flow_pin = 8;
+unsigned int flow_count = 0;
+unsigned int prev_count = 0;
+unsigned long prev_time = millis();
+bool b_wheel_turning = false;
+
+
 void setup() {
   Serial.begin(19200);
-  Serial.println("here");
   
+  //RFID
   SPI.begin();
   mfrc522.PCD_Init();
   delay(4);
@@ -44,6 +53,11 @@ void setup() {
   memcpy(big.uid, bbyte, 7);
   UIDs.push_back(small);
   UIDs.push_back(big);
+
+  //FLUX SENSOR
+  Serial.begin(9600);
+  pinMode( flow_pin, INPUT_PULLUP );
+  attachInterrupt( flow_pin, flowCounter, FALLING );
 }
 
 void loop() {
@@ -71,6 +85,19 @@ void loop() {
   }
   mfrc522.PICC_HaltA();
 
+  //FLUX
+  if( ( millis() - prev_time ) > 1000 ){
+    b_wheel_turning = ( flow_count == prev_count ) ? false : true;
+    
+    prev_count = flow_count;
+    prev_time = millis();
+    
+    Serial.print( "flow_count: " );
+    Serial.println( flow_count );
+    Serial.print( "b_wheel_turning: " );
+    Serial.println( b_wheel_turning );
+    Serial.println( "" );    
+  }
 }
 
 bool compareUID(byte* buffer, byte buffersize){
@@ -112,4 +139,8 @@ void printUID(byte* buffer, byte buffersize){
     Serial.print(" : ");
     Serial.println(buffer[i]);
   }
+}
+
+void flowCounter(){
+  flow_count++;
 }
