@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:smart_tank_app/load_tokens_page.dart';
 import 'header.dart';
 import 'token.dart';
 
@@ -159,6 +160,20 @@ class _MyHomePageState extends State<MyHomePage> {
             ElevatedButton(
               onPressed: () {
                 // Logic for button action
+
+                // get selected tokens where value is true
+                final selectedTokens = tokenSelectionStatus.entries
+                    .where((entry) => entry.value)
+                    .map((entry) => entry.key)
+                    .toList();
+                
+                //change to loading page
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => LoadTokenPage(tokens: selectedTokens),
+                  ),
+                );
               },
               child: const Text('Load to Cup'),
             ),
