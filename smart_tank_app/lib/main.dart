@@ -168,6 +168,9 @@ class _MyHomePageState extends State<MyHomePage> {
                     .toList();
                 
                 //change to loading page
+                if (selectedTokens.isEmpty) {
+                  return;
+                }
                 Navigator.push(
                   context,
                   MaterialPageRoute(
