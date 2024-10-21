@@ -1,0 +1,6 @@
+services:
+  publisher:
+    build: ./app
+    container_name: publisher
+    network_mode: "host"
+    restart: unless-stopped
