@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'header.dart';
+import 'token.dart';
+
 void main() {
   runApp(const MyApp());
 }
@@ -59,19 +61,28 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void _selectAll() {
     setState(() {
-      isChecked1 = true;
-      isChecked2 = true;
-      isChecked3 = true;
+      tokenSelectionStatus.forEach((token, _) {
+        tokenSelectionStatus[token] = true;
+      });
     });
   }
 
   void _deselectAll() {
     setState(() {
-      isChecked1 = false;
-      isChecked2 = false;
-      isChecked3 = false;
+      tokenSelectionStatus.forEach((token, _) {
+        tokenSelectionStatus[token] = false;
+      });
     });
   }
+
+  // The idea here is to load the tokens into this map from the server and keep track of the selection status
+  // currently this has placeholder values
+  Map<Token, bool> tokenSelectionStatus = {
+    Token('100', '1', 'user1', true, false): false,
+    Token('200', '2', 'user1', false, false): false,
+    Token('300', '3', 'user1',false, true): false,
+  };
+
 
   @override
   Widget build(BuildContext context) {
@@ -93,10 +104,16 @@ class _MyHomePageState extends State<MyHomePage> {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                ElevatedButton(
-                  onPressed: _selectAll,
-                  child: const Text('Select All'),
-                ),
+                if (tokenSelectionStatus.values.contains(true))
+                  ElevatedButton(
+                    onPressed: _deselectAll,
+                    child: const Text('Deselect All'),
+                  )
+                else
+                  ElevatedButton(
+                    onPressed: _selectAll,
+                    child: const Text('Select All'),
+                  )
               ],
             ),
             // Using LayoutBuilder to dynamically fit the table into the screen
@@ -108,57 +125,29 @@ class _MyHomePageState extends State<MyHomePage> {
                     columnSpacing: 10, // Adjust this to fine-tune spacing
                     columns: const <DataColumn>[
                       DataColumn(label: Text('')), // Checkbox column
-                      DataColumn(label: Text('Tokens')),
+                      DataColumn(label: Text('Token')),
                       DataColumn(label: Text('Establishment')),
-                      DataColumn(label: Text('Status')),
+                      DataColumn(label: Text('Loaded to Cup?')),
                     ],
-                    rows: <DataRow>[
-                      DataRow(
+                    rows: tokenSelectionStatus.entries.map((entry) {
+                      final token = entry.key;
+                      final isSelected = entry.value;
+                      return DataRow(
                         cells: <DataCell>[
                           DataCell(Checkbox(
-                            value: isChecked1,
+                            value: isSelected,
                             onChanged: (bool? value) {
                               setState(() {
-                                isChecked1 = value!;
+                                tokenSelectionStatus[token] = value!;
                               });
                             },
                           )),
-                          const DataCell(Text('100')),
-                          const DataCell(Text('Shop 1')),
-                          const DataCell(Text('Active')),
+                          DataCell(Text(token.id)),
+                          DataCell(Text(token.establishmentId)),
+                          DataCell(Text(token.isLoaded ? 'Yes' : 'No')),
                         ],
-                      ),
-                      DataRow(
-                        cells: <DataCell>[
-                          DataCell(Checkbox(
-                            value: isChecked2,
-                            onChanged: (bool? value) {
-                              setState(() {
-                                isChecked2 = value!;
-                              });
-                            },
-                          )),
-                          const DataCell(Text('200')),
-                          const DataCell(Text('Shop 2')),
-                          const DataCell(Text('Inactive')),
-                        ],
-                      ),
-                      DataRow(
-                        cells: <DataCell>[
-                          DataCell(Checkbox(
-                            value: isChecked3,
-                            onChanged: (bool? value) {
-                              setState(() {
-                                isChecked3 = value!;
-                              });
-                            },
-                          )),
-                          const DataCell(Text('300')),
-                          const DataCell(Text('Shop 3')),
-                          const DataCell(Text('Pending')),
-                        ],
-                      ),
-                    ],
+                      );
+                    }).toList(),
                   ),
                 );
               },
