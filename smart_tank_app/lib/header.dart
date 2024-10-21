@@ -14,6 +14,7 @@ class Header extends StatelessWidget implements PreferredSizeWidget {
   Widget build(BuildContext context) {
     return AppBar(
       backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+      foregroundColor: Colors.black,
       title: Text(title),
     );
   }
@@ -33,11 +34,11 @@ class HeaderDrawer extends StatelessWidget {
         children: <Widget>[
           const DrawerHeader(
             decoration: BoxDecoration(
-              color: Colors.deepPurple,
+              color: Colors.amber,
             ),
             child: Text(
               'Menu',
-              style: TextStyle(color: Colors.white, fontSize: 24),
+              style: TextStyle(color: Colors.black, fontSize: 24),
             ),
           ),
           ListTile(

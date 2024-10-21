@@ -1,11 +1,9 @@
 // File: load_token_page.dart
 
-import 'dart:io';
-
 import 'package:flutter/material.dart';
+import 'package:smart_tank_app/main.dart';
 import 'package:smart_tank_app/token.dart';
 import 'header.dart'; // Import the reusable header
-
 
 class LoadTokenPage extends StatefulWidget {
   final List<Token> tokens;
@@ -17,7 +15,6 @@ class LoadTokenPage extends StatefulWidget {
 
 class _LoadTokenPageState extends State<LoadTokenPage> {
   late AlertDialog _nfcDialog;
-  late bool _nfcActive;
 
   void _showNfcDialog(context) {
     _nfcDialog = gettingNFCInitStatus(context);
@@ -194,7 +191,10 @@ AlertDialog successNFCWriteDialog(BuildContext context) {
     actions: [
       TextButton(
         onPressed: () {
-          Navigator.of(context).pop();
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (context) => const MyHomePage()),
+            (Route<dynamic> route) => false,
+          );
         },
         child: const Text('Close'),
       ),

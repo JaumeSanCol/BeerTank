@@ -31,8 +31,24 @@ class MyApp extends StatelessWidget {
         //
         // This works for code too, not just values: Most code changes can be
         // tested with just a hot reload.
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme(
+          brightness: Brightness.dark,
+          primary: Colors.white,
+          onPrimary: Colors.amber,
+          secondary: Colors.amber,
+          onSecondary: Colors.amber,
+          error: Colors.red,
+          onError: Colors.white,
+          surface: Colors.grey.shade800,
+          onSurface: Colors.white,
+        ),
         useMaterial3: true,
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.amber, // Background color
+            foregroundColor: Colors.black
+          ),
+        ),
       ),
       home: const MyHomePage(),
     );
@@ -79,9 +95,11 @@ class _MyHomePageState extends State<MyHomePage> {
   // The idea here is to load the tokens into this map from the server and keep track of the selection status
   // currently this has placeholder values
   Map<Token, bool> tokenSelectionStatus = {
-    Token('100', '1', 'user1', true, false): false,
-    Token('200', '2', 'user1', false, false): false,
-    Token('300', '3', 'user1',false, true): false,
+    Token('wa100', 'bar1', 'user1', true, false): false,
+    Token('tf200', 'bar2', 'user1', false, false): false,
+    Token('gh300', 'bar3', 'user1',false, true): false,
+    Token('4gh00', 'bar1', 'user1', true, true): false,
+    Token('50d0g', 'bar2', 'user1', false, false): false,
   };
 
 
