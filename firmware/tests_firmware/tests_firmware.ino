@@ -21,12 +21,14 @@ struct UID {
 
 std::vector<UID> UIDs;
 
-//FLOW SENSOR
+//FLUX SENSOR
 byte flow_pin = 8;
 unsigned int flow_count = 0;
 unsigned int prev_count = 0;
 unsigned long prev_time = millis();
 bool b_wheel_turning = false;
+float volume_per_pulse = 2.25; //volume in ml per pulse (sensor YF-S201)
+float total_volume = 0.0; 
 
 
 void setup() {
@@ -85,18 +87,23 @@ void loop() {
   }
   mfrc522.PICC_HaltA();
 
-  //FLUX
-  if( ( millis() - prev_time ) > 1000 ){
-    b_wheel_turning = ( flow_count == prev_count ) ? false : true;
-    
+  //FLUX SENSOR
+  if ((millis() - prev_time) > 1000) {
+    b_wheel_turning = (flow_count == prev_count) ? false : true;
+
+    // Total volume in ml
+    total_volume += flow_count * volume_per_pulse;
+
     prev_count = flow_count;
     prev_time = millis();
-    
-    Serial.print( "flow_count: " );
-    Serial.println( flow_count );
-    Serial.print( "b_wheel_turning: " );
-    Serial.println( b_wheel_turning );
-    Serial.println( "" );    
+
+    Serial.print("flow_count: "); //can be removed
+    Serial.println(flow_count); //can be removed
+    Serial.print("b_wheel_turning: ");  //can be removed
+    Serial.println(b_wheel_turning);  //can be removed
+    Serial.print("Total Volume (ml): ");
+    Serial.println(total_volume);
+    Serial.println("");
   }
 }
 
@@ -141,6 +148,7 @@ void printUID(byte* buffer, byte buffersize){
   }
 }
 
+//FLUX SENSOR
 void flowCounter(){
   flow_count++;
 }
