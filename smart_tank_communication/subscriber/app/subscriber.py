@@ -3,8 +3,10 @@ from random import randrange
 import time
 
 # MQTT broker details
-broker = "localhost"  # IP of the Broker server
-port = 1883
+BROKER_IP   = "95.94.45.83"
+BROKER_PORT = 1883
+BROKER_USER = "pi"
+BROKER_PASSWORD = "vfpYcu8BVUB26kgtk73sADxYVJ2O3URc62SWs80n"
 
 topics = ["temperature", "water-level"]
 
@@ -19,7 +21,8 @@ client = mqtt.Client()
 client.on_message = on_message
 
 # Connect to the MQTT broker
-client.connect(broker, port)
+client.username_pw_set(BROKER_USER, BROKER_PASSWORD)
+client.connect(BROKER_IP, BROKER_PORT)
 
 # Subscribe to the topics
 for topic in topics:

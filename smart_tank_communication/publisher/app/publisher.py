@@ -3,8 +3,10 @@ from random import randrange
 import time
 
 # MQTT broker details
-broker = "localhost"  # IP of the Broker server
-port = 1883
+BROKER_IP   = "95.94.45.83"
+BROKER_PORT = 1883
+BROKER_USER = "pi"
+BROKER_PASSWORD = "vfpYcu8BVUB26kgtk73sADxYVJ2O3URc62SWs80n"
 
 topics = ["temperature", "water-level"]
 
@@ -12,7 +14,8 @@ topics = ["temperature", "water-level"]
 client = mqtt.Client()
 
 # Connect to the MQTT broker
-client.connect(broker, port)
+client.username_pw_set(BROKER_USER, BROKER_PASSWORD)
+client.connect(BROKER_IP, BROKER_PORT)
 
 # Publish messages in a loop
 try:
@@ -25,7 +28,7 @@ try:
                 print(f"Sent '{message}' to topic '{topic}'")
             else:
                 print(f"Failed to send message to topic {topic}")
-        time.sleep(0.5)  # Publish a message every 0.5 seconds
+        time.sleep(1)  # Publish a message every 1 second
 except KeyboardInterrupt:
     print("Publisher stopped")
     client.disconnect()
