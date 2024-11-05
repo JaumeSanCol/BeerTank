@@ -1,23 +1,22 @@
-#include <SPI.h>
-#include <WiFiNINA.h>
-#include <PubSubClient.h> 
-#include <ctime>   
+#include <WiFi.h>          
+#include <PubSubClient.h>     // PubSubClient for MQTT
 
 // Broker configurations
 const char* BROKER_IP = "95.94.45.83";
-const int BROKER_PORT = 1883; 
-const char* BROKER_USER = "pi"; 
-const char* BROKER_PASSWORD = "vfpYcu8BVUB26kgtk73sADxYVJ2O3URc62SWs80n"; 
-const char* ARDUINO_ID = "test"; 
+const int BROKER_PORT = 1883;
+const char* BROKER_USER = "pi";
+const char* BROKER_PASSWORD = "vfpYcu8BVUB26kgtk73sADxYVJ2O3URc62SWs80n";
+const char* ARDUINO_ID = "test";
 
-char ssid[] = "OPPO Reno6 5G"; 
-char pass[] = "i5ivve57";      
+// Prototype Network (simulates the bar network)
+char ssid[] = "OPPO Reno6 5G";  
+char pass[] = "i5ivve57";       
 
-// Define topics
+// Topics
 const char* TOPIC_TEMP = "temperature";
-const char* TOPIC_LEVEL = "level";
+const char* TOPIC_LEVEL = "water-level";
 
-// Create a client instance
+// Create WiFi and MQTT clients
 WiFiClient wifiClient;
 PubSubClient client(wifiClient);
 
@@ -25,13 +24,12 @@ void setup()
 {
     Serial.begin(9600);
     while (!Serial);
-    srand(static_cast<unsigned int>(time(0))); // Initialize random seed
 
     // Connect to WiFi
     WiFi.begin(ssid, pass);
     while (WiFi.status() != WL_CONNECTED) 
     {
-        Serial.print("Connecting to WiFi....");
+        Serial.print("Connecting to WiFi...");
         delay(1000);
     }
     Serial.println("Connected to WiFi");
@@ -41,14 +39,14 @@ void setup()
 
     // Connect to the broker
     if (client.connect(ARDUINO_ID, BROKER_USER, BROKER_PASSWORD)) {
-        Serial.println("Connected to the broker MQTT on " + String(BROKER_IP));
+        Serial.println("Connected to the MQTT broker at " + String(BROKER_IP));
     } else {
         Serial.print("Failed to connect, return code: ");
         Serial.println(client.state());
     }
 }
 
-void publish(float temperature, float level) {
+void publishValues(float temperature, float level) {
     // Create payload messages
     String tempMessage = "Temperature: " + String(temperature);
     String levelMessage = "Level: " + String(level);
@@ -70,14 +68,17 @@ void publish(float temperature, float level) {
 
 void loop() { 
     if (!client.connected()) {
-        // Reconnect if connection is lost
-        client.connect(ARDUINO_ID, BROKER_USER, BROKER_PASSWORD);
+      // Reconnect if connection is lost
+      Serial.println("Connection lost: Reconnecting...");
+      client.connect(ARDUINO_ID, BROKER_USER, BROKER_PASSWORD);
+
+      // Keep the connection active
+      client.loop();
     }
-
-    client.loop(); // Keep the connection active
-
-    // Generate and publish values
-    float x = static_cast<float>(rand() % 100);
-    publish(x, x);
-    delay(1000); // Wait for 1 second
+    else{
+      // Generate and publish values
+      float x = static_cast<float>(rand() % 100); // Generate a random number between 0 and 99
+      publishValues(x, x);
+      delay(1000); // Wait for 1 second
+    }
 }
