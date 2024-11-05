@@ -16,6 +16,8 @@ char pass[] = "i5ivve57";
 const char* TOPIC_TEMP = "temperature";
 const char* TOPIC_LEVEL = "water-level";
 
+const bool show_reading=false;  // Hide or display the readings
+
 // Create WiFi and MQTT clients
 WiFiClient wifiClient;
 PubSubClient client(wifiClient);
@@ -40,30 +42,37 @@ void setup()
     // Connect to the broker
     if (client.connect(ARDUINO_ID, BROKER_USER, BROKER_PASSWORD)) {
         Serial.println("Connected to the MQTT broker at " + String(BROKER_IP));
+        client.subscribe(TOPIC_TEMP); 
     } else {
         Serial.print("Failed to connect, return code: ");
         Serial.println(client.state());
     }
+
+    // Define the callback
+    client.setCallback(readValues);
 }
 
-void publishValues(float temperature, float level) {
-    // Create payload messages
-    String tempMessage = "Temperature: " + String(temperature);
-    String levelMessage = "Level: " + String(level);
+void publishValues(const char* topic, const String& value) {
+    // Create payload message
+    String message = String(topic) + ": " + value;
 
-    // Publish temperature
-    if (client.publish(TOPIC_TEMP, tempMessage.c_str())) {
-        Serial.println("Published: " + tempMessage + " to topic: " + String(TOPIC_TEMP));
+    // Publish value
+    if (client.publish(topic, message.c_str())) {
+        Serial.println("Published: " + message + " to topic: " + String(topic));
     } else {
-        Serial.println("Failed to publish temperature message");
+        Serial.println("Failed to publish " + String(topic) + " message");
     }
-
-    // Publish level
-    if (client.publish(TOPIC_LEVEL, levelMessage.c_str())) {
-        Serial.println("Published: " + levelMessage + " to topic: " + String(TOPIC_LEVEL));
-    } else {
-        Serial.println("Failed to publish level message");
+}
+void readValues(char* topic, byte* payload, unsigned int length) {
+    String message;
+    for (int i = 0; i < length; i++) {
+        message += (char)payload[i]; // Build the message from payload bytes
     }
+    if(show_reading){ // Print the received message 
+      Serial.print("Received: ");
+      Serial.println(message + " on topic: " + topic); 
+    }
+    
 }
 
 void loop() { 
@@ -71,14 +80,15 @@ void loop() {
       // Reconnect if connection is lost
       Serial.println("Connection lost: Reconnecting...");
       client.connect(ARDUINO_ID, BROKER_USER, BROKER_PASSWORD);
-
-      // Keep the connection active
-      client.loop();
+      client.subscribe(TOPIC_LEVEL); 
     }
     else{
+      // Keep the connection active
+      client.loop();
+      
       // Generate and publish values
       float x = static_cast<float>(rand() % 100); // Generate a random number between 0 and 99
-      publishValues(x, x);
+      publishValues(TOPIC_LEVEL, String(x));
       delay(1000); // Wait for 1 second
     }
 }
