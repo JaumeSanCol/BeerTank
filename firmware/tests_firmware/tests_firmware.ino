@@ -7,19 +7,16 @@
 #define SS_PIN  10 // SDA (SS) pin
 #define LED_PIN 6
 
-//RFID
-MFRC522 mfrc522(SS_PIN, RST_PIN);
-
-byte smallcup[7] = {4,197,86,97,16,2,136}; 
-byte bigcup[7] = {4,127,179,222,16,1,137};
-
-
 struct UID {
   std::string name;
   byte uid[7];
 };
 
+//RFID
+MFRC522 mfrc522(SS_PIN, RST_PIN);
 std::vector<UID> UIDs;
+bool isPouring = false;
+bool pouringEnded = true;
 
 //FLUX SENSOR
 byte flow_pin = 8;
@@ -29,7 +26,6 @@ unsigned long prev_time = millis();
 bool b_wheel_turning = false;
 float volume_per_pulse = 2.25; //volume in ml per pulse (sensor YF-S201)
 float total_volume = 0.0; 
-
 
 void setup() {
   Serial.begin(19200);
@@ -45,7 +41,7 @@ void setup() {
   digitalWrite(LED_PIN, LOW);
 
   //TEST POPULATION
-  byte sbyte[7] = {4,197,86,97,16,2,136};
+  byte sbyte[7] = {4,197,86,97,16,2,137};
   byte bbyte[7] = {4,127,179,222,16,1,137};
   UID small;
   UID big;
@@ -59,35 +55,55 @@ void setup() {
   //FLUX SENSOR
   Serial.begin(9600);
   pinMode( flow_pin, INPUT_PULLUP );
-  attachInterrupt( flow_pin, flowCounter, FALLING );
+  attachInterrupt( flow_pin, FlowCounter, FALLING );
+  isPouring = false;
+  pouringEnded = true;
+
 }
 
 void loop() {
 
-  // reset del ciclo quando nessuna scheda è inserita nel lettore
-  if ( ! mfrc522.PICC_IsNewCardPresent()) {
-     return;
+
+  if(!isPouring){
+    // reset del ciclo quando nessuna scheda è inserita nel lettore
+    if ( ! mfrc522.PICC_IsNewCardPresent()) {
+      return;
+    }
+
+    if ( ! mfrc522.PICC_ReadCardSerial()) {
+      return;
+    }
+
+    // visualizza l'UID sulla porta seriale di Arduino IDE
+    //mfrc522.PICC_DumpToSerial(&(mfrc522.uid));
+    MFRC522::PICC_Type PICC_Type = mfrc522.PICC_GetType(mfrc522.uid.sak);
+
+    PrintUID(mfrc522.uid.uidByte, mfrc522.uid.size);
+    bool existsUID = CompareUID(mfrc522.uid.uidByte, mfrc522.uid.size);
+    if(existsUID){
+      digitalWrite(LED_PIN, HIGH);
+      isPouring = true;
+    }
+    mfrc522.PICC_HaltA();
   }
 
-  if ( ! mfrc522.PICC_ReadCardSerial()) {
-     return;
+  if(isPouring){
+    PouringRoutine();
   }
 
-  // visualizza l'UID sulla porta seriale di Arduino IDE
-  //mfrc522.PICC_DumpToSerial(&(mfrc522.uid));
-  MFRC522::PICC_Type PICC_Type = mfrc522.PICC_GetType(mfrc522.uid.sak);
-
-  printUID(mfrc522.uid.uidByte, mfrc522.uid.size);
-  bool result = compareUID(mfrc522.uid.uidByte, mfrc522.uid.size);
-  Serial.println(result);
-  if (result == 1){
-    digitalWrite(LED_PIN, HIGH);
-  } else {
+  if(pouringEnded){
     digitalWrite(LED_PIN, LOW);
+    isPouring = false;
   }
-  mfrc522.PICC_HaltA();
+}
 
-  //FLUX SENSOR
+void PouringRoutine(){
+  if(pouringEnded){
+    total_volume = 0;
+    flow_count = 0;
+    pouringEnded = false;
+  }
+
   if ((millis() - prev_time) > 1000) {
     b_wheel_turning = (flow_count == prev_count) ? false : true;
 
@@ -105,9 +121,12 @@ void loop() {
     Serial.println(total_volume);
     Serial.println("");
   }
+  if(total_volume > 100){
+    pouringEnded = true;
+  }
 }
 
-bool compareUID(byte* buffer, byte buffersize){
+bool CompareUID(byte* buffer, byte buffersize){
   if(buffersize != 7){
     Serial.println("Error! UID with differnt size");
     return 0;
@@ -140,7 +159,7 @@ bool compareUID(byte* buffer, byte buffersize){
   }
 }
 
-void printUID(byte* buffer, byte buffersize){
+void PrintUID(byte* buffer, byte buffersize){
   for(int i = 0; i<buffersize; i++){
     Serial.print(i);
     Serial.print(" : ");
@@ -149,6 +168,6 @@ void printUID(byte* buffer, byte buffersize){
 }
 
 //FLUX SENSOR
-void flowCounter(){
+void FlowCounter(){
   flow_count++;
 }
