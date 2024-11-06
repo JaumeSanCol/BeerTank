@@ -80,8 +80,11 @@ void loop() {
 
     PrintUID(mfrc522.uid.uidByte, mfrc522.uid.size);
     bool existsUID = CompareUID(mfrc522.uid.uidByte, mfrc522.uid.size);
+    //byte buffer[10];
+    //ReadDataBlock(0, buffer, 10);
     if(existsUID){
       digitalWrite(LED_PIN, HIGH);
+      //PrintBuffer(buffer, 10);
       isPouring = true;
     }
     mfrc522.PICC_HaltA();
@@ -97,6 +100,17 @@ void loop() {
   }
 }
 
+/*
+void ReadDataBlock(int block, byte* buffer, int buffersize){
+  byte status = mfrc522.MIFARE_Read(0, buffer, &buffersize);
+  if(status != MFRC522::STATUS_OK){
+    Serial.print("MIFARE_read() failed!");
+    Serial.println(mfrc522.GetStatusCodeName(status));
+    return 4;
+  }
+  Serial.println("Block was read!");
+}
+*/
 void PouringRoutine(){
   if(pouringEnded){
     total_volume = 0;
@@ -121,7 +135,7 @@ void PouringRoutine(){
     Serial.println(total_volume);
     Serial.println("");
   }
-  if(total_volume > 100){
+  if(total_volume > 1450){
     pouringEnded = true;
   }
 }
@@ -159,12 +173,19 @@ bool CompareUID(byte* buffer, byte buffersize){
   }
 }
 
+void PrintBuffer(byte* buffer, byte buffersize){
+  for(int i = 0; i<buffersize; i++){
+    Serial.print(buffer[i]);
+  }
+  Serial.println();
+}
+
 void PrintUID(byte* buffer, byte buffersize){
   for(int i = 0; i<buffersize; i++){
-    Serial.print(i);
-    Serial.print(" : ");
-    Serial.println(buffer[i]);
+    Serial.print(buffer[i]);
+    Serial.print(" ");
   }
+  Serial.println();
 }
 
 //FLUX SENSOR
