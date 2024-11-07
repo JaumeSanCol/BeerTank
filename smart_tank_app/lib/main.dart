@@ -39,7 +39,7 @@ class MyApp extends StatelessWidget {
           onSecondary: Colors.amber,
           error: Colors.red,
           onError: Colors.white,
-          surface: Colors.grey.shade800,
+          surface: const Color(0xff261412),
           onSurface: Colors.white,
         ),
         useMaterial3: true,

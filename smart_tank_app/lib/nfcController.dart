@@ -24,6 +24,7 @@ class NfcController {
   Future<void> onDetect(NfcTag tag) async {
     print('NFC tag detected');
     print(tag.data);
+    //TODO: Also make sure to save any cup information and remove other tokens from the cup
     try{
       //Write token id to the NFC tag, in overwrite mode
       NdefMessage message = NdefMessage([
@@ -40,6 +41,7 @@ class NfcController {
       // check if they match
       if (readMessage == message) {
         print('Token written to NFC tag successfully');
+        //TODO: update token status on the server
       } else {
         print('Failed to write token to NFC tag');
       }
