@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:smart_tank_app/load_tokens_page.dart';
+import 'package:smart_tank_app/login_page.dart';
 import 'header.dart';
 import 'token.dart';
 
@@ -50,7 +51,7 @@ class MyApp extends StatelessWidget {
           ),
         ),
       ),
-      home: const MyHomePage(),
+      home: LoginPage(),
     );
   }
 }
