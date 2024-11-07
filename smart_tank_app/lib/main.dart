@@ -90,87 +90,96 @@ class _MyHomePageState extends State<MyHomePage> {
     return Scaffold(
       appBar: const Header(title: "SmartTank"),
       drawer: const HeaderDrawer(),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                const Text(
-                  'Active Tokens',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
+      body: SingleChildScrollView(
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  const Text(
+                    'Active Tokens',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
-              ],
-            ),
-            // Using LayoutBuilder to dynamically fit the table into the screen
-            LayoutBuilder(
-              builder: (BuildContext context, BoxConstraints constraints) {
-                return SizedBox(
-                  width: constraints.maxWidth,
+                ],
+              ),
+              // Using LayoutBuilder to dynamically fit the table into the screen
+              LayoutBuilder(
+                builder: (BuildContext context, BoxConstraints constraints) {
+                  return SizedBox(
+                    width: constraints.maxWidth * 0.9,
                     child: Column(
-                    children: tokens
-                      .map((token) => token.establishmentId)
-                      .toSet()
-                      .map((establishmentId) {
-                      List<Token> establishmentTokens = tokens
-                        .where((token) => token.establishmentId == establishmentId)
-                        .toList();
-                      return ExpansionTile(
-                      title: Text('Establishment $establishmentId'),
-                        children: establishmentTokens.map((token) {
-                        return ListTile(
-                          title: Text('Token ${token.id}'),
-                          subtitle: Text('Status: ${token.status}'),
-                          onTap: () {
-                          setState(() {
-                            selectedToken = token;
-                          });
-                          },
-                          selected: selectedToken == token,
-                          selectedTileColor: Colors.grey.shade300,
-                          shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          ),
+                      children: tokens
+                          .map((token) => token.establishmentId)
+                          .toSet()
+                          .map((establishmentId) {
+                        List<Token> establishmentTokens = tokens
+                            .where((token) => token.establishmentId == establishmentId)
+                            .toList();
+                        return ExpansionTile(
+                          title: Text('Establishment $establishmentId'),
+                          children: establishmentTokens.map((token) {
+                            return ListTile(
+                              title: Text('Token ${token.id}'),
+                              subtitle: Text('Status: ${token.status}'),
+                              onTap: () {
+                              setState(() {
+                                if (selectedToken == token) {
+                                selectedToken = null;
+                                } else {
+                                selectedToken = token;
+                                }
+                              });
+                              },
+                              selected: selectedToken == token,
+                              selectedTileColor: Colors.amber,
+                              shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              ),
+                            );
+                          }).toList(),
                         );
                       }).toList(),
-                      );
-                    }).toList(),
-                    ),
-                );
-              },
-            ),
-
-            const SizedBox(height: 20),
-
-            // Button at the end of the table
-            ElevatedButton(
-              onPressed: () {
-                // Logic for button action
-                if (selectedToken != null) {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => LoadTokenPage(token: selectedToken!),
                     ),
                   );
-                } else {
-                  // Handle the case when no token is selected
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Please select a token first')),
-                  );
-                }
-              },
-              child: const Text('Load to Cup'),
-            ),
-          ],
+                },
+              ),
+
+              const SizedBox(height: 20),
+
+              // Button at the end of the table
+              const SizedBox(height: 20),
+            ],
+          ),
         ),
       ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          // Logic for button action
+          if (selectedToken != null) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+              builder: (context) => LoadTokenPage(token: selectedToken!),
+              ),
+            );
+          } else {
+            // Handle the case when no token is selected
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Please select a token first')),
+            );
+          }
+        },
+        label: const Text('Load to Cup', style: TextStyle(color: Colors.black)),
+        icon: const Icon(Icons.local_drink, color: Colors.black,),
+        backgroundColor: Colors.amber,
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
   }
 }
-
