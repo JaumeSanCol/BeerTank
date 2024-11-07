@@ -83,7 +83,7 @@ class _MyHomePageState extends State<MyHomePage> {
     Token(5, 2, 1, "spent"),
   ];
 
-  Token? selectedToken = null;
+  Token? selectedToken;
 
   @override
   Widget build(BuildContext context) {
@@ -161,14 +161,19 @@ class _MyHomePageState extends State<MyHomePage> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
           // Logic for button action
-          if (selectedToken != null) {
+          if (selectedToken != null && selectedToken!.status == "phone") {
             Navigator.push(
               context,
               MaterialPageRoute(
               builder: (context) => LoadTokenPage(token: selectedToken!),
               ),
             );
-          } else {
+          } else if (selectedToken != null && selectedToken!.status == "cup") {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('The token is already loaded to a cup. Please select another token')),
+            );
+          } 
+          else {
             // Handle the case when no token is selected
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Please select a token first')),
