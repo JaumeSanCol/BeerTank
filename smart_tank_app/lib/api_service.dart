@@ -1,6 +1,9 @@
 import 'dart:convert';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';  // To load the config.json
 import 'package:http/http.dart' as http;
+import 'package:smart_tank_app/dialog_utils.dart';
+import 'package:smart_tank_app/login_page.dart';
 
 // Class to manage API interactions
 class ApiService {
@@ -101,5 +104,34 @@ class ApiService {
   static void setTokens(accessToken, refreshToken) {
     _setJwtToken(accessToken);
     _setRefreshToken(refreshToken);
+  }
+
+  static Future<void> refreshToken(context) async {
+    try {
+      final refreshResponse = await postRequest(
+          'token/refresh', {'refreshToken': _refreshToken});
+      if (refreshResponse.statusCode == 200) {
+        final data = jsonDecode(refreshResponse.body);
+        _jwtToken = data['accessToken'];
+        _refreshToken = data['refreshToken'];
+      }
+      else { //401, 403, 500 -->redirect to login
+        logout();
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const LoginPage()),
+        );
+        showErrorDialog(context, 'Session Expired - Please login again!');
+      }
+    }
+    catch (e) {
+      print(e);
+      showErrorDialog(context, 'Could not check token validity, Try again later!');
+    }
+  }
+
+  static void logout() {
+    _jwtToken = '';
+    _refreshToken = '';
   }
 }

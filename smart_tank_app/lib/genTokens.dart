@@ -60,7 +60,11 @@ class _GenTokensPageState extends State<GenTokensPage> {
       if (response.statusCode == 201) {
         // If the token generation is successful, show a success message
         showSuccessDialog(context, 'Tokens generated successfully!');
-      } else {
+      }
+      if (response.statusCode == 403) {
+        ApiService.refreshToken(context);
+      }
+      else {
         // If the response is not successful, show an error message
         showErrorDialog(context, 'Failed to generate tokens. Please try again.');
       }
