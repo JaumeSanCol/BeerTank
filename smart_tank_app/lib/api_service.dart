@@ -49,7 +49,9 @@ class ApiService {
       Map<String, dynamic> body, {
         bool requiresAuth = false,
       }) async {
-    await loadConfig();
+    if (_jwtToken == null) {
+      await loadConfig();
+    }
 
     final url = Uri.parse("$_baseUrl$endpoint");
 
@@ -62,7 +64,6 @@ class ApiService {
     if (requiresAuth && _jwtToken != null) {
       headers['Authorization'] = 'Bearer $_jwtToken';
     }
-    print(jsonEncode(body));
     final response = await http.post(
       url,
       headers: headers,
