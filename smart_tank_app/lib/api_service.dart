@@ -127,6 +127,11 @@ class ApiService {
     catch (e) {
       print(e);
       showErrorDialog(context, 'Could not check token validity, Try again later!');
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const LoginPage()),
+      );
+      logout();
     }
   }
 
