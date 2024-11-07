@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:smart_tank_app/load_tokens_page.dart';
 import 'header.dart';
 import 'token.dart';
 
@@ -30,8 +31,24 @@ class MyApp extends StatelessWidget {
         //
         // This works for code too, not just values: Most code changes can be
         // tested with just a hot reload.
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme(
+          brightness: Brightness.dark,
+          primary: Colors.white,
+          onPrimary: Colors.amber,
+          secondary: Colors.amber,
+          onSecondary: Colors.amber,
+          error: Colors.red,
+          onError: Colors.white,
+          surface: const Color(0xff261412),
+          onSurface: Colors.white,
+        ),
         useMaterial3: true,
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.amber, // Background color
+            foregroundColor: Colors.black
+          ),
+        ),
       ),
       home: const MyHomePage(),
     );
@@ -55,117 +72,119 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  bool isChecked1 = false;
-  bool isChecked2 = false;
-  bool isChecked3 = false;
-
-  void _selectAll() {
-    setState(() {
-      tokenSelectionStatus.forEach((token, _) {
-        tokenSelectionStatus[token] = true;
-      });
-    });
-  }
-
-  void _deselectAll() {
-    setState(() {
-      tokenSelectionStatus.forEach((token, _) {
-        tokenSelectionStatus[token] = false;
-      });
-    });
-  }
-
   // The idea here is to load the tokens into this map from the server and keep track of the selection status
   // currently this has placeholder values
-  Map<Token, bool> tokenSelectionStatus = {
-    Token('100', '1', 'user1', true, false): false,
-    Token('200', '2', 'user1', false, false): false,
-    Token('300', '3', 'user1',false, true): false,
-  };
+  //TODO: fetch real tokens from DB
+  List<Token> tokens = [
+    Token(1, 1, 1, "phone"),
+    Token(2, 2, 1, "phone"),
+    Token(3, 3, 1, "cup"),
+    Token(4, 1, 1, "cup"),
+    Token(5, 2, 1, "spent"),
+  ];
 
+  Token? selectedToken;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: const Header(title: "SmartTank"),
       drawer: const HeaderDrawer(),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                const Text(
-                  'Active Tokens',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
+      body: SingleChildScrollView(
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  const Text(
+                    'Active Tokens',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
-                if (tokenSelectionStatus.values.contains(true))
-                  ElevatedButton(
-                    onPressed: _deselectAll,
-                    child: const Text('Deselect All'),
-                  )
-                else
-                  ElevatedButton(
-                    onPressed: _selectAll,
-                    child: const Text('Select All'),
-                  )
-              ],
-            ),
-            // Using LayoutBuilder to dynamically fit the table into the screen
-            LayoutBuilder(
-              builder: (BuildContext context, BoxConstraints constraints) {
-                return SizedBox(
-                  width: constraints.maxWidth,
-                  child: DataTable(
-                    columnSpacing: 10, // Adjust this to fine-tune spacing
-                    columns: const <DataColumn>[
-                      DataColumn(label: Text('')), // Checkbox column
-                      DataColumn(label: Text('Token')),
-                      DataColumn(label: Text('Establishment')),
-                      DataColumn(label: Text('Loaded to Cup?')),
-                    ],
-                    rows: tokenSelectionStatus.entries.map((entry) {
-                      final token = entry.key;
-                      final isSelected = entry.value;
-                      return DataRow(
-                        cells: <DataCell>[
-                          DataCell(Checkbox(
-                            value: isSelected,
-                            onChanged: (bool? value) {
+                ],
+              ),
+              // Using LayoutBuilder to dynamically fit the table into the screen
+              LayoutBuilder(
+                builder: (BuildContext context, BoxConstraints constraints) {
+                  return SizedBox(
+                    width: constraints.maxWidth * 0.9,
+                    child: Column(
+                      children: tokens
+                          .map((token) => token.establishmentId)
+                          .toSet()
+                          .map((establishmentId) {
+                        List<Token> establishmentTokens = tokens
+                            .where((token) => token.establishmentId == establishmentId)
+                            .toList();
+                        return ExpansionTile(
+                          title: Text('Establishment $establishmentId'),
+                          children: establishmentTokens.map((token) {
+                            return ListTile(
+                              title: Text('Token ${token.id}'),
+                              subtitle: Text('Status: ${token.status}'),
+                              onTap: () {
                               setState(() {
-                                tokenSelectionStatus[token] = value!;
+                                if (selectedToken == token) {
+                                selectedToken = null;
+                                } else {
+                                selectedToken = token;
+                                }
                               });
-                            },
-                          )),
-                          DataCell(Text(token.id)),
-                          DataCell(Text(token.establishmentId)),
-                          DataCell(Text(token.isLoaded ? 'Yes' : 'No')),
-                        ],
-                      );
-                    }).toList(),
-                  ),
-                );
-              },
-            ),
+                              },
+                              selected: selectedToken == token,
+                              selectedTileColor: Colors.amber,
+                              shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              ),
+                            );
+                          }).toList(),
+                        );
+                      }).toList(),
+                    ),
+                  );
+                },
+              ),
 
-            const SizedBox(height: 20),
+              const SizedBox(height: 20),
 
-            // Button at the end of the table
-            ElevatedButton(
-              onPressed: () {
-                // Logic for button action
-              },
-              child: const Text('Load to Cup'),
-            ),
-          ],
+              // Button at the end of the table
+              const SizedBox(height: 20),
+            ],
+          ),
         ),
       ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          // Logic for button action
+          if (selectedToken != null && selectedToken!.status == "phone") {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+              builder: (context) => LoadTokenPage(token: selectedToken!),
+              ),
+            );
+          } else if (selectedToken != null && selectedToken!.status == "cup") {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('The token is already loaded to a cup. Please select another token')),
+            );
+          } 
+          else {
+            // Handle the case when no token is selected
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Please select a token first')),
+            );
+          }
+        },
+        label: const Text('Load to Cup', style: TextStyle(color: Colors.black)),
+        icon: const Icon(Icons.local_drink, color: Colors.black,),
+        backgroundColor: Colors.amber,
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
   }
 }
-
