@@ -72,36 +72,18 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  bool isChecked1 = false;
-  bool isChecked2 = false;
-  bool isChecked3 = false;
-
-  void _selectAll() {
-    setState(() {
-      tokenSelectionStatus.forEach((token, _) {
-        tokenSelectionStatus[token] = true;
-      });
-    });
-  }
-
-  void _deselectAll() {
-    setState(() {
-      tokenSelectionStatus.forEach((token, _) {
-        tokenSelectionStatus[token] = false;
-      });
-    });
-  }
-
   // The idea here is to load the tokens into this map from the server and keep track of the selection status
   // currently this has placeholder values
-  Map<Token, bool> tokenSelectionStatus = {
-    Token('wa100', 'bar1', 'user1', true, false): false,
-    Token('tf200', 'bar2', 'user1', false, false): false,
-    Token('gh300', 'bar3', 'user1',false, true): false,
-    Token('4gh00', 'bar1', 'user1', true, true): false,
-    Token('50d0g', 'bar2', 'user1', false, false): false,
-  };
+  //TODO: fetch real tokens from DB
+  List<Token> tokens = [
+    Token(1, 1, 1, "phone"),
+    Token(2, 2, 1, "phone"),
+    Token(3, 3, 1, "cup"),
+    Token(4, 1, 1, "cup"),
+    Token(5, 2, 1, "spent"),
+  ];
 
+  Token? selectedToken = null;
 
   @override
   Widget build(BuildContext context) {
@@ -123,16 +105,6 @@ class _MyHomePageState extends State<MyHomePage> {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                if (tokenSelectionStatus.values.contains(true))
-                  ElevatedButton(
-                    onPressed: _deselectAll,
-                    child: const Text('Deselect All'),
-                  )
-                else
-                  ElevatedButton(
-                    onPressed: _selectAll,
-                    child: const Text('Select All'),
-                  )
               ],
             ),
             // Using LayoutBuilder to dynamically fit the table into the screen
@@ -140,34 +112,35 @@ class _MyHomePageState extends State<MyHomePage> {
               builder: (BuildContext context, BoxConstraints constraints) {
                 return SizedBox(
                   width: constraints.maxWidth,
-                  child: DataTable(
-                    columnSpacing: 10, // Adjust this to fine-tune spacing
-                    columns: const <DataColumn>[
-                      DataColumn(label: Text('')), // Checkbox column
-                      DataColumn(label: Text('Token')),
-                      DataColumn(label: Text('Establishment')),
-                      DataColumn(label: Text('Loaded to Cup?')),
-                    ],
-                    rows: tokenSelectionStatus.entries.map((entry) {
-                      final token = entry.key;
-                      final isSelected = entry.value;
-                      return DataRow(
-                        cells: <DataCell>[
-                          DataCell(Checkbox(
-                            value: isSelected,
-                            onChanged: (bool? value) {
-                              setState(() {
-                                tokenSelectionStatus[token] = value!;
-                              });
-                            },
-                          )),
-                          DataCell(Text(token.id)),
-                          DataCell(Text(token.establishmentId)),
-                          DataCell(Text(token.isLoaded ? 'Yes' : 'No')),
-                        ],
+                    child: Column(
+                    children: tokens
+                      .map((token) => token.establishmentId)
+                      .toSet()
+                      .map((establishmentId) {
+                      List<Token> establishmentTokens = tokens
+                        .where((token) => token.establishmentId == establishmentId)
+                        .toList();
+                      return ExpansionTile(
+                      title: Text('Establishment $establishmentId'),
+                        children: establishmentTokens.map((token) {
+                        return ListTile(
+                          title: Text('Token ${token.id}'),
+                          subtitle: Text('Status: ${token.status}'),
+                          onTap: () {
+                          setState(() {
+                            selectedToken = token;
+                          });
+                          },
+                          selected: selectedToken == token,
+                          selectedTileColor: Colors.grey.shade300,
+                          shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          ),
+                        );
+                      }).toList(),
                       );
                     }).toList(),
-                  ),
+                    ),
                 );
               },
             ),
@@ -178,23 +151,19 @@ class _MyHomePageState extends State<MyHomePage> {
             ElevatedButton(
               onPressed: () {
                 // Logic for button action
-
-                // get selected tokens where value is true
-                final selectedTokens = tokenSelectionStatus.entries
-                    .where((entry) => entry.value)
-                    .map((entry) => entry.key)
-                    .toList();
-                
-                //change to loading page
-                if (selectedTokens.isEmpty) {
-                  return;
+                if (selectedToken != null) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => LoadTokenPage(token: selectedToken!),
+                    ),
+                  );
+                } else {
+                  // Handle the case when no token is selected
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Please select a token first')),
+                  );
                 }
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => LoadTokenPage(tokens: selectedTokens),
-                  ),
-                );
               },
               child: const Text('Load to Cup'),
             ),

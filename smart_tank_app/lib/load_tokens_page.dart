@@ -6,8 +6,8 @@ import 'package:smart_tank_app/token.dart';
 import 'header.dart'; // Import the reusable header
 
 class LoadTokenPage extends StatefulWidget {
-  final List<Token> tokens;
-  const LoadTokenPage({super.key, required this.tokens});
+  final Token token;
+  const LoadTokenPage({super.key, required this.token});
 
   @override
   State<LoadTokenPage> createState() => _LoadTokenPageState();
@@ -87,7 +87,7 @@ class _LoadTokenPageState extends State<LoadTokenPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const Header(title: 'Load Tokens to Cup'), // Reuse the header
+      appBar: const Header(title: 'Load Token to Cup'), // Reuse the header
       drawer: const HeaderDrawer(), // Reuse the drawer
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -101,15 +101,9 @@ class _LoadTokenPageState extends State<LoadTokenPage> {
             ),
             const SizedBox(height: 20),
             Expanded(
-              child: ListView.builder(
-                itemCount: widget.tokens.length,
-                itemBuilder: (context, index) {
-                  final token = widget.tokens[index];
-                  return ListTile(
-                    title: Text('Token ID: ${token.id}'),
-                    subtitle: Text('Establishment: ${token.establishmentId}'),
-                  );
-                },
+              child: ListTile(
+              title: Text('Token ${widget.token.id}'),
+              subtitle: Text('Status: ${widget.token.status}'),
               ),
             ),
             const SizedBox(height: 20),
