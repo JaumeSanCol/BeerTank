@@ -1,6 +1,7 @@
 // File: login_page.dart
 
 import 'package:flutter/material.dart';
+import 'package:smart_tank_app/dialog_utils.dart';
 import 'dart:convert';
 import 'api_service.dart';  // Import the ApiService
 import 'main.dart';
@@ -47,38 +48,12 @@ class _LoginPageState extends State<LoginPage> {
           MaterialPageRoute(builder: (context) => const MyHomePage()),
         );
       } else {
-        // Handle login failure
-        showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: Text('Login Failed'),
-            content: Text('Please check your credentials and try again.'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text('OK'),
-              ),
-            ],
-          ),
-        );
+        showErrorDialog(context, 'Login Failed - Please check your credentials');
       }
     } catch (e) {
       // Handle any errors during the request
       print("Error during login: $e");
-
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: Text('Error'),
-          content: Text('Something went wrong. Please try again later.'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text('OK'),
-            ),
-          ],
-        ),
-      );
+      showErrorDialog(context, 'Something went wrong! Try again later!');
     }
   }
 

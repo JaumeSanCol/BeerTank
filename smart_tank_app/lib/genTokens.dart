@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'header.dart'; // Import the reusable header
 import 'api_service.dart'; // Import the ApiService for API calls
 import 'package:flutter/services.dart'; // For restricting input
+import 'dialog_utils.dart'; // Import the dialog utility functions
 
 class GenTokensPage extends StatefulWidget {
   const GenTokensPage({super.key});
@@ -38,12 +39,12 @@ class _GenTokensPageState extends State<GenTokensPage> {
   Future<void> _generateTokens() async {
     final customerId = _customerIdController.text;
     final establishment = _selectedEstablishment;
-    final establishmentID = 3;  //TODO this should be the id of the selected establishment
+    final establishmentID = 1;  //TODO this should be the id of the selected establishment
     final tokenQuantity = _tokenQuantity;
 
     // Ensure Customer ID is not empty
     if (customerId.isEmpty) {
-      _showErrorDialog('Customer ID cannot be empty');
+      showErrorDialog(context, 'Customer ID cannot be empty');
       return;
     }
 
@@ -58,50 +59,16 @@ class _GenTokensPageState extends State<GenTokensPage> {
       print(response.body);
       if (response.statusCode == 201) {
         // If the token generation is successful, show a success message
-        _showSuccessDialog('Tokens generated successfully!');
+        showSuccessDialog(context, 'Tokens generated successfully!');
       } else {
         // If the response is not successful, show an error message
-        _showErrorDialog('Failed to generate tokens. Please try again.');
+        showErrorDialog(context, 'Failed to generate tokens. Please try again.');
       }
     } catch (e) {
       // Handle any exceptions during the API request
-      _showErrorDialog('An error occurred. Please try again later.');
+      showErrorDialog(context, 'An error occurred. Please try again later.');
       print(e);
     }
-  }
-
-  // Show an error dialog
-  void _showErrorDialog(String message) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Error'),
-        content: Text(message),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('OK'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Show a success dialog
-  void _showSuccessDialog(String message) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Success'),
-        content: Text(message),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('OK'),
-          ),
-        ],
-      ),
-    );
   }
 
   @override
