@@ -62,7 +62,7 @@ class ApiService {
     if (requiresAuth && _jwtToken != null) {
       headers['Authorization'] = 'Bearer $_jwtToken';
     }
-
+    print(jsonEncode(body));
     final response = await http.post(
       url,
       headers: headers,

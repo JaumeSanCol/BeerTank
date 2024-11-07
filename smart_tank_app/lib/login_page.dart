@@ -13,17 +13,17 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  final TextEditingController _customerIdController = TextEditingController();
+  final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
   // Function to handle login
   Future<void> login() async {
-    final customerId = _customerIdController.text;
+    final username = _usernameController.text;
     final password = _passwordController.text;
 
     // Prepare the request body
     final body = {
-      'username': customerId,
+      'username': username,
       'password': password,
     };
 
@@ -31,11 +31,12 @@ class _LoginPageState extends State<LoginPage> {
       // Make the POST request using the ApiService class
       final response = await ApiService.postRequest("/login", body);
       print(response.body);
-      if (response.statusCode == 201) {
+      print(response.statusCode);
+      if (response.statusCode == 200) {
         // Decode the response and retrieve the JWT token
         final data = jsonDecode(response.body);
-        final accessToken = data['accesstoken'];
-        final refreshToken = data['refreshtoken'];
+        final accessToken = data['accessToken'];
+        final refreshToken = data['refreshToken'];
 
         // Save the token to memory or a secure storage option
         ApiService.setTokens(accessToken, refreshToken);
@@ -104,12 +105,11 @@ class _LoginPageState extends State<LoginPage> {
               ),
               const SizedBox(height: 40), // Space between title and fields
               TextField(
-                controller: _customerIdController,
+                controller: _usernameController,
                 decoration: const InputDecoration(
-                  labelText: 'Customer ID',
+                  labelText: 'Username',
                   border: OutlineInputBorder(),
-                ),
-                keyboardType: TextInputType.number,
+                )
               ),
               const SizedBox(height: 20), // Space between fields
               TextField(
