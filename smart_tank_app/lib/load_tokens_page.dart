@@ -8,7 +8,9 @@ import 'nfcController.dart';
 
 class LoadTokenPage extends StatefulWidget {
   final Token token;
-  const LoadTokenPage({super.key, required this.token});
+  LoadTokenPage({super.key, required this.token});
+  
+  late NfcController nfcController;
 
   @override
   State<LoadTokenPage> createState() => _LoadTokenPageState();
@@ -16,6 +18,12 @@ class LoadTokenPage extends StatefulWidget {
 
 class _LoadTokenPageState extends State<LoadTokenPage> {
   late AlertDialog _nfcDialog;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.nfcController = NfcController(widget.token);
+  }
 
   void _showNfcDialog(context) {
     _nfcDialog = gettingNFCInitStatus(context);
@@ -74,9 +82,7 @@ class _LoadTokenPageState extends State<LoadTokenPage> {
   }
 
   Future<bool> _initNfc() async {
-    // Simulate NFC initialization
-    await Future.delayed(Duration(seconds: 2));
-    return true; // Return true if successful, false if failed
+    return await widget.nfcController.checkAvailability();
   }
 
   Future<bool> _transferData() async {
