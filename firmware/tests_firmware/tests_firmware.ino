@@ -6,6 +6,7 @@
 #define RST_PIN  9 // RES pin
 #define SS_PIN  10 // SDA (SS) pin
 #define LED_PIN 6
+#define VALVE_PIN 2
 
 struct UID {
   std::string name;
@@ -54,11 +55,14 @@ void setup() {
 
   //FLUX SENSOR
   Serial.begin(9600);
-  pinMode( flow_pin, INPUT_PULLUP );
+  pinMode( flow_pin, INPUT_PULLUP);
   attachInterrupt( flow_pin, FlowCounter, FALLING );
   isPouring = false;
   pouringEnded = true;
 
+  //VALVE
+  pinMode(VALVE_PIN, OUTPUT);
+  digitalWrite(VALVE_PIN, LOW);
 }
 
 void loop() {
@@ -84,6 +88,8 @@ void loop() {
     //ReadDataBlock(0, buffer, 10);
     if(existsUID){
       digitalWrite(LED_PIN, HIGH);
+      digitalWrite(VALVE_PIN, HIGH);
+      Serial.println("exists");
       //PrintBuffer(buffer, 10);
       isPouring = true;
     }
@@ -96,6 +102,7 @@ void loop() {
 
   if(pouringEnded){
     digitalWrite(LED_PIN, LOW);
+    digitalWrite(VALVE_PIN, LOW);
     isPouring = false;
   }
 }
