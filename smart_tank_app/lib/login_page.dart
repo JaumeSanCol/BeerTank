@@ -38,9 +38,8 @@ class _LoginPageState extends State<LoginPage> {
         final data = jsonDecode(response.body);
         final accessToken = data['accessToken'];
         final refreshToken = data['refreshToken'];
-        final user_id = 3; //TODO login must also return id in data['id']
         // Save the token to memory or a secure storage option
-        ApiService.setTokens(accessToken, refreshToken, user_id);
+        ApiService.setTokens(accessToken, refreshToken);
 
         // Navigate to the home page
         Navigator.pushReplacement(
