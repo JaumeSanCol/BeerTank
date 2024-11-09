@@ -59,24 +59,7 @@ class _LoadTokenPageState extends State<LoadTokenPage> {
       }
       
       // Transfer data
-      _transferData().then(
-        (transferStatus) {
-          Navigator.of(context).pop();
-          print('Data transfer: $transferStatus');
-          if (transferStatus) {
-            _nfcDialog = successNFCWriteDialog(context);
-          } else {
-            _nfcDialog = failureNFCWriteDialog(context);
-          }
-          showDialog(
-            context: context,
-            barrierDismissible: true,
-            builder: (BuildContext context) {
-              return _nfcDialog;
-            },
-          );
-        },
-      );
+      _transferData(onWriteComplete);
       }
     );
   }
@@ -85,10 +68,27 @@ class _LoadTokenPageState extends State<LoadTokenPage> {
     return await widget.nfcController.checkAvailability();
   }
 
-  Future<bool> _transferData() async {
+  Future<void> _transferData(Function(bool) onWriteComplete) async {
     // Simulate file transfer
-    await Future.delayed(Duration(seconds: 2));
-    return true; // Return true if successful, false if failed
+    await widget.nfcController.startSession(onWriteComplete);
+  }
+
+  void onWriteComplete(bool transferStatus){
+    Navigator.of(context).pop();
+    print('Data transfer: $transferStatus');
+    if (transferStatus) {
+      _nfcDialog = successNFCWriteDialog(context);
+    } else {
+      _nfcDialog = failureNFCWriteDialog(context);
+    }
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (BuildContext context) {
+        return _nfcDialog;
+      },
+    );
+    widget.nfcController.stopSession();
   }
 
   @override
@@ -131,7 +131,7 @@ class _LoadTokenPageState extends State<LoadTokenPage> {
                   onPressed: () => {
                     _showNfcDialog(context)
                   },
-                  child: const Text('Load Tokens'),
+                  child: const Text('Load Token'),
                 ),
               ],
             ),
@@ -231,3 +231,4 @@ AlertDialog gettingNFCInitStatus(BuildContext context) {
     ),
   );
 }
+

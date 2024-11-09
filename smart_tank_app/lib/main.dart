@@ -76,7 +76,7 @@ class _MyHomePageState extends State<MyHomePage> {
   // currently this has placeholder values
   //TODO: fetch real tokens from DB
   List<Token> tokens = [
-    Token(1, 1, 1, "phone"),
+    Token(1234567, 1, 1, "phone"),
     Token(2, 2, 1, "phone"),
     Token(3, 3, 1, "cup"),
     Token(4, 1, 1, "cup"),
