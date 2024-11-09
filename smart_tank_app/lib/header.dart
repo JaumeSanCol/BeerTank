@@ -1,6 +1,7 @@
 // File: header.dart
 
 import 'package:flutter/material.dart';
+import 'package:smart_tank_app/api_service.dart';
 import 'login_page.dart';
 import 'main.dart';
 import 'genTokens.dart';
@@ -81,9 +82,10 @@ class HeaderDrawer extends StatelessWidget {
             leading: const Icon(Icons.logout),
             title: const Text('Logout'),
             onTap: () {
+              ApiService.logout();
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (context) => const LoginPage()),
+                MaterialPageRoute(builder: (context) => LoginPage()),
               );
             },
           ),
