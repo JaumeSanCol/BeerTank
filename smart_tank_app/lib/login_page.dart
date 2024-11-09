@@ -1,11 +1,65 @@
 // File: login_page.dart
 
 import 'package:flutter/material.dart';
-
+import 'package:smart_tank_app/dialog_utils.dart';
+import 'dart:convert';
+import 'api_service.dart';  // Import the ApiService
 import 'main.dart';
 
-class LoginPage extends StatelessWidget {
+class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
+
+  @override
+  _LoginPageState createState() => _LoginPageState();
+}
+
+class _LoginPageState extends State<LoginPage> {
+  final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+
+  // Function to handle login
+  Future<void> login() async {
+    final username = _usernameController.text;
+    final password = _passwordController.text;
+
+    // Prepare the request body
+    final body = {
+      'username': username,
+      'password': password,
+    };
+
+    try {
+      // Make the POST request using the ApiService class
+      final response = await ApiService.postRequest("/login", body);
+      print(response.body);
+      print(response.statusCode);
+      if (response.statusCode == 200) {
+        // Decode the response and retrieve the JWT token
+        final data = jsonDecode(response.body);
+        final accessToken = data['accessToken'];
+        final refreshToken = data['refreshToken'];
+        // Save the token to memory or a secure storage option
+        ApiService.setTokens(accessToken, refreshToken);
+
+        // Navigate to the home page
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const MyHomePage()),
+        );
+      } else {
+        showErrorDialog(context, 'Login Failed - Please check your credentials');
+      }
+    } catch (e) {
+      // Handle any errors during the request
+      print("Error during login: $e");
+      showErrorDialog(context, 'Something went wrong! Try again later!');
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -25,32 +79,24 @@ class LoginPage extends StatelessWidget {
               ),
               const SizedBox(height: 40), // Space between title and fields
               TextField(
+                controller: _usernameController,
                 decoration: const InputDecoration(
-                  labelText: 'Customer ID',
+                  labelText: 'Username',
                   border: OutlineInputBorder(),
-                ),
-                keyboardType: TextInputType.number, // Define input type for numbers
+                )
               ),
               const SizedBox(height: 20), // Space between fields
               TextField(
+                controller: _passwordController,
                 decoration: const InputDecoration(
                   labelText: 'Password',
                   border: OutlineInputBorder(),
                 ),
-                obscureText: true, // Hide password input
+                obscureText: true,
               ),
               const SizedBox(height: 40), // Space before the button
               ElevatedButton(
-                onPressed: () {
-                  // Placeholder for login logic
-                  // Add your authentication logic here
-
-                  // Navigate to the home page after login
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (context) => const MyHomePage()),
-                  );
-                },
+                onPressed: login, // Trigger login without BuildContext
                 child: const Text('Log In'),
               ),
             ],
