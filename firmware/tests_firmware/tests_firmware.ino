@@ -1,6 +1,6 @@
 #include "SPI.h"
 #include "MFRC522.h"
-#include <vector>
+#include "Vector.h"
 #include <string.h> 
 
 #define RST_PIN  9 // RES pin
@@ -10,13 +10,13 @@
 #define FLOW_PIN 8
 
 struct UID {
-  std::string name;
+  String name;
   byte uid[7];
 };
 
 //RFID
 MFRC522 mfrc522(SS_PIN, RST_PIN);
-std::vector<UID> UIDs;
+Vector<UID> UIDs;
 bool isPouring = false;
 bool pouringEnded = true;
 
@@ -61,7 +61,7 @@ void setup() {
 
   //VALVE
   pinMode(VALVE_PIN, OUTPUT);
-  digitalWrite(VALVE_PIN, HIGH);
+  digitalWrite(VALVE_PIN, LOW);
 }
 
 void loop() {
@@ -82,7 +82,7 @@ void loop() {
     MFRC522::PICC_Type PICC_Type = mfrc522.PICC_GetType(mfrc522.uid.sak);
 
     PrintUID(mfrc522.uid.uidByte, mfrc522.uid.size);
-    bool existsUID = CompareUID(mfrc522.uid.uidByte, mfrc522.uid.size);
+    bool existsUID  = true;//= CompareUID(mfrc522.uid.uidByte, mfrc522.uid.size);
     //byte buffer[10];
     //ReadDataBlock(0, buffer, 10);
     if(existsUID){
@@ -156,7 +156,7 @@ bool CompareUID(byte* buffer, byte buffersize){
     return 0;
   }
 
-  std::string result= "none";
+  String result= "none";
   for(int j = 0; j<UIDs.size(); j++){
     bool found = true;
     for(int i = 0; i<buffersize; i++){
