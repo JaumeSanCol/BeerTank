@@ -103,7 +103,7 @@ class _LoadTokenPageState extends State<LoadTokenPage> {
           children: [
             const SizedBox(height: 20),
             const Text(
-              'Selected Tokens',
+              'Selected Token',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 20),
