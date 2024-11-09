@@ -6,7 +6,8 @@
 #define RST_PIN  9 // RES pin
 #define SS_PIN  10 // SDA (SS) pin
 #define LED_PIN 6
-#define VALVE_PIN 2
+#define VALVE_PIN 3
+#define FLOW_PIN 8
 
 struct UID {
   std::string name;
@@ -20,7 +21,6 @@ bool isPouring = false;
 bool pouringEnded = true;
 
 //FLUX SENSOR
-byte flow_pin = 8;
 unsigned int flow_count = 0;
 unsigned int prev_count = 0;
 unsigned long prev_time = millis();
@@ -29,7 +29,7 @@ float volume_per_pulse = 2.25; //volume in ml per pulse (sensor YF-S201)
 float total_volume = 0.0; 
 
 void setup() {
-  Serial.begin(19200);
+  Serial.begin(9600);
   
   //RFID
   SPI.begin();
@@ -54,15 +54,14 @@ void setup() {
   UIDs.push_back(big);
 
   //FLUX SENSOR
-  Serial.begin(9600);
-  pinMode( flow_pin, INPUT_PULLUP);
-  attachInterrupt( flow_pin, FlowCounter, FALLING );
+  pinMode(FLOW_PIN, INPUT_PULLUP);
+  attachInterrupt( FLOW_PIN, FlowCounter, FALLING );
   isPouring = false;
   pouringEnded = true;
 
   //VALVE
   pinMode(VALVE_PIN, OUTPUT);
-  digitalWrite(VALVE_PIN, LOW);
+  digitalWrite(VALVE_PIN, HIGH);
 }
 
 void loop() {
@@ -89,7 +88,7 @@ void loop() {
     if(existsUID){
       digitalWrite(LED_PIN, HIGH);
       digitalWrite(VALVE_PIN, HIGH);
-      Serial.println("exists");
+      Serial.println("VALVE ACTIVATED");
       //PrintBuffer(buffer, 10);
       isPouring = true;
     }
@@ -101,6 +100,7 @@ void loop() {
   }
 
   if(pouringEnded){
+    Serial.println("VALVE CLOSED");
     digitalWrite(LED_PIN, LOW);
     digitalWrite(VALVE_PIN, LOW);
     isPouring = false;
@@ -122,30 +122,33 @@ void PouringRoutine(){
   if(pouringEnded){
     total_volume = 0;
     flow_count = 0;
+    prev_count = 0; // Inizializza prev_count
     pouringEnded = false;
   }
 
   if ((millis() - prev_time) > 1000) {
+    // Verifica se c'è stato un cambiamento nel conteggio degli impulsi
     b_wheel_turning = (flow_count == prev_count) ? false : true;
 
-    // Total volume in ml
-    total_volume += flow_count * volume_per_pulse;
+    // Calcola solo il volume aggiuntivo dagli impulsi nuovi
+    total_volume += (flow_count - prev_count) * volume_per_pulse;
 
     prev_count = flow_count;
     prev_time = millis();
 
-    Serial.print("flow_count: "); //can be removed
-    Serial.println(flow_count); //can be removed
-    Serial.print("b_wheel_turning: ");  //can be removed
-    Serial.println(b_wheel_turning);  //can be removed
+    Serial.print("flow_count: ");
+    Serial.println(flow_count);
+    Serial.print("b_wheel_turning: ");
+    Serial.println(b_wheel_turning);
     Serial.print("Total Volume (ml): ");
     Serial.println(total_volume);
     Serial.println("");
   }
-  if(total_volume > 1450){
+  if(total_volume > 200){
     pouringEnded = true;
   }
 }
+
 
 bool CompareUID(byte* buffer, byte buffersize){
   if(buffersize != 7){
