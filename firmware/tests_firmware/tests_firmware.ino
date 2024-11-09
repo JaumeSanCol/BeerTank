@@ -6,8 +6,8 @@
 #define RST_PIN 9  // RES pin
 #define SS_PIN 10  // SDA (SS) pin
 #define LED_PIN 6
-#define VALVE_PIN 8
-#define FLOW_PIN 2
+#define VALVE_PIN 4
+#define FLUX_PIN 3
 
 struct UID {
   String name;
@@ -21,12 +21,12 @@ bool isPouring = false;
 bool pouringEnded = true;
 
 //FLUX SENSOR
-
 volatile int pulseCount;
 float flowRate;
 unsigned long flowMilliLitres;
 unsigned long totalMilliLitres;
 unsigned long oldTime;
+float calibrationFactor = 4.5;
 
 /*
 unsigned int flow_count = 0;
@@ -35,9 +35,16 @@ unsigned long prev_time = millis();
 bool b_wheel_turning = false;
 float volume_per_pulse = 2.25;  //volume in ml per pulse (sensor YF-S201)
 float total_volume = 0.0;
+*/
 
 void setup() {
+
+  pinMode(VALVE_PIN, OUTPUT);
+
+
   Serial.begin(9600);
+  pinMode(LED_PIN, OUTPUT);
+  pinMode(FLUX_PIN, INPUT_PULLUP);
 
   //RFID
   SPI.begin();
@@ -45,9 +52,6 @@ void setup() {
   delay(4);
   mfrc522.PCD_DumpVersionToSerial();
   Serial.println(F("Scan PICC to see UID, SAK, type, and data blocks..."));
-
-  pinMode(LED_PIN, OUTPUT);
-  digitalWrite(LED_PIN, LOW);
 
   //TEST POPULATION
   byte sbyte[7] = { 4, 197, 86, 97, 16, 2, 137 };
@@ -60,16 +64,21 @@ void setup() {
   memcpy(big.uid, bbyte, 7);
   UIDs.push_back(small);
   UIDs.push_back(big);
-
-  //FLUX SENSOR
-  pinMode(FLOW_PIN, INPUT_PULLUP);
-  attachInterrupt(digitalPinToInterrupt(FLOW_PIN), FlowCounter, FALLING);
+  
+  
+  pulseCount = 0;
+  flowRate = 0;
+  flowMilliLitres = 0;
+  totalMilliLitres = 0;
+  oldTime = 0;
   isPouring = false;
   pouringEnded = true;
 
-  //VALVE
-  pinMode(VALVE_PIN, OUTPUT);
   digitalWrite(VALVE_PIN, LOW);
+  digitalWrite(LED_PIN, LOW);
+
+
+  attachInterrupt(digitalPinToInterrupt(FLUX_PIN), PulseCounter, FALLING);
 }
 
 void loop() {
@@ -126,6 +135,42 @@ void ReadDataBlock(int block, byte* buffer, int buffersize){
   Serial.println("Block was read!");
 }
 */
+
+
+void PouringRoutine(){
+  if (pouringEnded) {
+    pulseCount = 0;
+    flowRate = 0;
+    flowMilliLitres = 0;
+    totalMilliLitres = 0;
+    oldTime = 0;
+    pouringEnded = false;
+  } 
+  if ((millis() - oldTime) > 1000) {
+    detachInterrupt(digitalPinToInterrupt(FLUX_PIN));
+
+    flowRate = ((1000.0 / (millis() - oldTime)) * pulseCount) / calibrationFactor;
+    oldTime = millis();
+
+    float flowMilliLitresPerSecond = flowRate * 1000 / 60;
+    totalMilliLitres += flowMilliLitresPerSecond;
+
+    Serial.print("flow rate: ");
+    Serial.print(flowMilliLitresPerSecond);
+    Serial.print("mL/sec, ");
+    Serial.print(totalMilliLitres);
+    Serial.println("mL");
+
+    pulseCount = 0;
+
+    attachInterrupt(digitalPinToInterrupt(FLUX_PIN), PulseCounter, FALLING);
+  }
+  if (totalMilliLitres > 100) {
+    pouringEnded = true;
+  }
+}
+
+/*
 void PouringRoutine() {
   if (pouringEnded) {
     total_volume = 0;
@@ -190,6 +235,7 @@ bool CompareUID(byte* buffer, byte buffersize) {
     return true;
   }
 }
+*/
 
 void PrintBuffer(byte* buffer, byte buffersize) {
   for (int i = 0; i < buffersize; i++) {
@@ -207,6 +253,6 @@ void PrintUID(byte* buffer, byte buffersize) {
 }
 
 //FLUX SENSOR
-void FlowCounter() {
-  flow_count++;
+void PulseCounter() {
+  pulseCount++;
 }
