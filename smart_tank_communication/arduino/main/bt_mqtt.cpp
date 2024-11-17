@@ -2,6 +2,7 @@
 #include "config.h"
 #include <WiFi.h>
 #include <PubSubClient.h>
+#include <RTClib.h>
 
 void connectToWiFi() {
     WiFi.begin(ssid, pass);
@@ -18,6 +19,7 @@ void reconnectToWiFi(){
     digitalWrite(LED_BUILTIN, LOW);
     connectToWiFi();
 }
+
 
 void setupMQTT(PubSubClient& client) {
     client.setServer(BROKER_IP, BROKER_PORT);
@@ -37,7 +39,7 @@ void reconnectMQTT(PubSubClient& client) {
     while (!client.connected()) {
         if (client.connect(ARDUINO_ID, BROKER_USER, BROKER_PASSWORD)) {
             Serial.println("Reconnected to MQTT broker");
-            client.subscribe(TOPIC_LEVEL);
+            client.subscribe(TOPIC_RESPONSE);
         } else {
             Serial.print("Failed, rc=");
             Serial.print(client.state());
@@ -47,8 +49,10 @@ void reconnectMQTT(PubSubClient& client) {
     }
 }
 
-void publishValues(PubSubClient& client, const char* topic, const String& value) {
-    String message = String(topic) + ": " + value;
+void publishValues(PubSubClient& client, const char* topic, String date, const String& value) {
+    // String message = String(topic) + ": " + value;
+    String tank_id=ARDUINO_ID;
+    String message = tank_id + "%" + date + "%" + value;
     if (client.publish(topic, message.c_str())) {
         Serial.println("Published: " + message + " to topic: " + String(topic));
     } else {
@@ -61,8 +65,8 @@ void readValues(char* topic, byte* payload, unsigned int length) {
     for (int i = 0; i < length; i++) {
         message += (char)payload[i];
     }
-    int receivedToken = message.substring(0, message.indexOf(':')).toInt();
-    int response = message.substring(message.indexOf(':') + 1).toInt();
+    int receivedToken = message.substring(0, message.indexOf('%')).toInt();
+    int response = message.substring(message.indexOf('%') + 1).toInt();
     //Serial.println(receivedToken);
     if (receivedToken == token_to_validate) {
         response_received=true;
@@ -70,12 +74,18 @@ void readValues(char* topic, byte* payload, unsigned int length) {
         Serial.print("Token validation ");
         Serial.println(validation_result ? "Approved" : "Denied");
         token_to_validate=0;
+        token_sent=false;
     }
 }
 
 void validateToken(PubSubClient& client, int token){
     String message = String(token);
-    publishValues(client, TOPIC_TOKEN, message);
+    String topic=TOPIC_TOKEN;
+    if (client.publish(TOPIC_TOKEN, message.c_str())) {
+        Serial.println("Published: " + message + " to topic: " + topic);
+    } else {
+        Serial.println("Failed to publish " + topic + " message");
+    }
     token_sent=true;
     start_time = millis();
     response_received = false;  
@@ -88,6 +98,6 @@ void timerforresponse(){
         Serial.println("Error: No response for validation");
         response_received = true;
         token_to_validate=0;
+        token_sent=false;
     }
 }
-   

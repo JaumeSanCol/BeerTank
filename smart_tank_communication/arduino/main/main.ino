@@ -3,10 +3,13 @@
 #include "config.h"
 #include "bt_mqtt.h"
 #include "Arduino.h"
-
+#include <WiFiUdp.h>
+#include <NTPClient.h>
 
 WiFiClient wifiClient;
 PubSubClient client(wifiClient);
+WiFiUDP udp;
+NTPClient timeClient(udp, ntpServer, utcOffsetInSeconds);
 
 void setup() {
     Serial.begin(9600);
@@ -15,9 +18,11 @@ void setup() {
 
     connectToWiFi();
     setupMQTT(client);
+    timeClient.begin();
 }
 
 void loop() { 
+    timeClient.update();
     if(WiFi.status() != WL_CONNECTED){
         reconnectToWiFi();
         reconnectMQTT(client);
@@ -25,14 +30,14 @@ void loop() {
     else if (!client.connected()) {
         reconnectMQTT(client);
     } else {
-      
         client.loop();
-
+        
         float x = static_cast<float>(rand() % 100); 
-
+      
         // PUBLISH VALUES
-        // publishValues(client, TOPIC_LEVEL, String(x)); // Send data to topic TOPIC_LEVEL
-
+        String date=timeClient.getFormattedTime();
+        publishValues(client,TOPIC_LEVEL,date, String(x)); // Send data to topic TOPIC_LEVEL
+        
         // // EXAMPLE TO CHECK A TOKEN (WITH MANUAL INSERTION OF THE TOKEN)
         // if (Serial.available() > 0) {
         //     String input = Serial.readStringUntil('\n'); 

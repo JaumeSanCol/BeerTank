@@ -22,7 +22,7 @@ client.connect(BROKER_IP, BROKER_PORT)
 try:
     while True:
             # message = f"{topic}: {randrange(10)}"
-            message= "3333:1"
+            message= "3333%1"
             result = client.publish(topic, message)
             status = result[0]
             if status == 0:

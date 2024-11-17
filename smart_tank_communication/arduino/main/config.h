@@ -1,6 +1,8 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
+extern const char* ntpServer;  // You can use other NTP servers
+extern const long  utcOffsetInSeconds ;  
 // WiFi Configuration
 extern const char* ssid;
 extern const char* pass;

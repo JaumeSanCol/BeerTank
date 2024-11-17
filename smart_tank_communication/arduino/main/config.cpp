@@ -2,8 +2,10 @@
 
 // WiFi Configuration
 const char* ssid = "OPPO Reno6 5G";  
-const char* pass = "i5ivve57";       
-
+const char* pass = "i5ivve57";  
+// Clock Configuration
+const char* ntpServer = "pool.ntp.org";
+const long  utcOffsetInSeconds = 0; 
 // Configuration of the broker MQTT
 const char* BROKER_IP = "95.94.45.83";
 const int BROKER_PORT = 1883;
