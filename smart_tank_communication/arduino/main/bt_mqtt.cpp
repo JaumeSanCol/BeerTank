@@ -1,4 +1,4 @@
-#include "functions.h"
+#include "bt_mqtt.h"
 #include "config.h"
 #include <WiFi.h>
 #include <PubSubClient.h>
@@ -6,17 +6,24 @@
 void connectToWiFi() {
     WiFi.begin(ssid, pass);
     while (WiFi.status() != WL_CONNECTED) {
-        Serial.print("Connecting to WiFi...");
+        Serial.println("Connecting to WiFi...");
         delay(1000);
     }
     Serial.println("Connected to WiFi");
+    digitalWrite(LED_BUILTIN, HIGH);
+}
+
+void reconnectToWiFi(){
+    Serial.println("Connection WIFI Lost: Reconnecting...");
+    digitalWrite(LED_BUILTIN, LOW);
+    connectToWiFi();
 }
 
 void setupMQTT(PubSubClient& client) {
     client.setServer(BROKER_IP, BROKER_PORT);
     if (client.connect(ARDUINO_ID, BROKER_USER, BROKER_PASSWORD)) {
         Serial.println("Connected to the MQTT broker at " + String(BROKER_IP));
-        client.subscribe(TOPIC_TEMP);
+        client.subscribe(TOPIC_RESPONSE);
     } else {
         Serial.print("Failed to connect, return code: ");
         Serial.println(client.state());
@@ -24,8 +31,9 @@ void setupMQTT(PubSubClient& client) {
     client.setCallback(readValues);
 }
 
+
 void reconnectMQTT(PubSubClient& client) {
-    Serial.println("Connection lost: Reconnecting...");
+    Serial.println("Connection with broker lost: Reconnecting...");
     while (!client.connected()) {
         if (client.connect(ARDUINO_ID, BROKER_USER, BROKER_PASSWORD)) {
             Serial.println("Reconnected to MQTT broker");
@@ -53,8 +61,33 @@ void readValues(char* topic, byte* payload, unsigned int length) {
     for (int i = 0; i < length; i++) {
         message += (char)payload[i];
     }
-    if (show_reading) {
-        Serial.print("Received: ");
-        Serial.println(message + " on topic: " + topic);
+    int receivedToken = message.substring(0, message.indexOf(':')).toInt();
+    int response = message.substring(message.indexOf(':') + 1).toInt();
+    //Serial.println(receivedToken);
+    if (receivedToken == token_to_validate) {
+        response_received=true;
+        validation_result = (response == 1); // 1 Approved 0 Denied
+        Serial.print("Token validation ");
+        Serial.println(validation_result ? "Approved" : "Denied");
+        token_to_validate=0;
     }
 }
+
+void validateToken(PubSubClient& client, int token){
+    String message = String(token);
+    publishValues(client, TOPIC_TOKEN, message);
+    token_sent=true;
+    start_time = millis();
+    response_received = false;  
+    Serial.print("Validation for token: ");
+    Serial.println(token);
+    token_to_validate=token;
+}
+void timerforresponse(){
+    if (token_sent && !response_received && millis() - start_time > timeout) {
+        Serial.println("Error: No response for validation");
+        response_received = true;
+        token_to_validate=0;
+    }
+}
+   

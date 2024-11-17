@@ -14,6 +14,15 @@ const char* ARDUINO_ID = "test";
 // Topics MQTT
 const char* TOPIC_TEMP = "temperature";
 const char* TOPIC_LEVEL = "water-level";
+const char* TOPIC_TOKEN = "validate-token";
+const char* TOPIC_RESPONSE = "response-token";
 
-// Print readings
-const bool show_reading = false;
+// Validation of Tokens
+
+const int timeout=5000;
+int token_to_validate=0;
+bool validation_result = false;
+bool token_sent=false; 
+bool response_received = false;
+int start_time=0;
+

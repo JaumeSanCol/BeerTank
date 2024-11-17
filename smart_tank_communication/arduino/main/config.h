@@ -15,8 +15,14 @@ extern const char* ARDUINO_ID;
 // Topics MQTT
 extern const char* TOPIC_TEMP;
 extern const char* TOPIC_LEVEL;
+extern const char* TOPIC_TOKEN;
+extern const char* TOPIC_RESPONSE;
 
-// Print readings
-extern const bool show_reading;
-
+// Validation
+extern const int timeout;
+extern int token_to_validate;
+extern bool validation_result; 
+extern bool token_sent;
+extern bool response_received;
+extern int start_time;
 #endif
