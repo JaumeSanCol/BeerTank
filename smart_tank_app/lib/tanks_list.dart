@@ -93,19 +93,19 @@ class _TankListState extends State<TankList> {
                   margin: EdgeInsets.all(10),
                   padding: EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: Colors.grey.shade300,
+                    color: Colors.amberAccent,
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         tank.name,
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.black),
                       ),
                       SizedBox(height: 8),
-                      Text("Level: ${tank.level} L"),
-                      Text("Beers served: ${tank.beersServed}"),
-                      Text("Temperature: ${tank.temperature}°C"),
+                      Text("Level: ${tank.level} L", style: TextStyle(color: Colors.black),),
+                      Text("Beers served: ${tank.beersServed}", style: TextStyle(color: Colors.black),),
+                      Text("Temperature: ${tank.temperature}°C", style: TextStyle(color: Colors.black),),
                     ],
                   ),
                 ),

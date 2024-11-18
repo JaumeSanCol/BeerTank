@@ -74,7 +74,7 @@ class _EstablishmentsPageState extends State<EstablishmentPage> {
               }
 
               return Padding(
-                padding: const EdgeInsets.all(8.0),
+                padding: const EdgeInsets.fromLTRB(15, 10, 15, 10),
                 child: DropdownButton<Establishment>(
                   hint: Text('Select an Establishment'),
                   value: selectedEstablishment,
