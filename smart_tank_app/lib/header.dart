@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:smart_tank_app/establishments_page.dart';
+import 'package:smart_tank_app/api_service.dart';
 import 'login_page.dart';
 import 'main.dart';
 import 'genTokens.dart';
@@ -15,6 +16,7 @@ class Header extends StatelessWidget implements PreferredSizeWidget {
   Widget build(BuildContext context) {
     return AppBar(
       backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+      foregroundColor: Colors.black,
       title: Text(title),
     );
   }
@@ -34,11 +36,11 @@ class HeaderDrawer extends StatelessWidget {
         children: <Widget>[
           const DrawerHeader(
             decoration: BoxDecoration(
-              color: Colors.deepPurple,
+              color: Colors.amber,
             ),
             child: Text(
               'Menu',
-              style: TextStyle(color: Colors.white, fontSize: 24),
+              style: TextStyle(color: Colors.black, fontSize: 24),
             ),
           ),
           ListTile(
@@ -91,9 +93,10 @@ class HeaderDrawer extends StatelessWidget {
             leading: const Icon(Icons.logout),
             title: const Text('Logout'),
             onTap: () {
+              ApiService.logout();
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (context) => const LoginPage()),
+                MaterialPageRoute(builder: (context) => LoginPage()),
               );
             },
           ),
