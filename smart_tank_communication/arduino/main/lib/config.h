@@ -1,8 +1,6 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-extern const char* ntpServer;  // You can use other NTP servers
-extern const long  utcOffsetInSeconds ;  
 // WiFi Configuration
 extern const char* ssid;
 extern const char* pass;
@@ -17,14 +15,12 @@ extern const char* ARDUINO_ID;
 // Topics MQTT
 extern const char* TOPIC_TEMP;
 extern const char* TOPIC_LEVEL;
-extern const char* TOPIC_TOKEN;
-extern const char* TOPIC_RESPONSE;
+// API endpoint
+extern const char* server ; 
+extern const int httpsPort ; 
 
-// Validation
-extern const int timeout;
-extern int token_to_validate;
-extern bool validation_result; 
-extern bool token_sent;
-extern bool response_received;
-extern int start_time;
+// Login credentials
+extern const char* username ;
+extern const char* userPassword ;
+
 #endif

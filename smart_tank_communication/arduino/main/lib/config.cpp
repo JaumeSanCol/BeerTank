@@ -3,9 +3,7 @@
 // WiFi Configuration
 const char* ssid = "OPPO Reno6 5G";  
 const char* pass = "i5ivve57";  
-// Clock Configuration
-const char* ntpServer = "pool.ntp.org";
-const long  utcOffsetInSeconds = 0; 
+
 // Configuration of the broker MQTT
 const char* BROKER_IP = "95.94.45.83";
 const int BROKER_PORT = 1883;
@@ -16,15 +14,12 @@ const char* ARDUINO_ID = "test";
 // Topics MQTT
 const char* TOPIC_TEMP = "temperature";
 const char* TOPIC_LEVEL = "water-level";
-const char* TOPIC_TOKEN = "validate-token";
-const char* TOPIC_RESPONSE = "response-token";
 
-// Validation of Tokens
+// HTTPS
+// API endpoint
+const char* server = "sci-cloudapp.onrender.com"; 
+const int httpsPort = 443; 
+const char* username = "Your_Username";
+const char* userPassword = "Your_Password";
 
-const int timeout=5000;
-int token_to_validate=0;
-bool validation_result = false;
-bool token_sent=false; 
-bool response_received = false;
-int start_time=0;
 

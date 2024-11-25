@@ -9,7 +9,7 @@ BROKER_USER = "pi"
 BROKER_PASSWORD = "vfpYcu8BVUB26kgtk73sADxYVJ2O3URc62SWs80n"
 
 topics = ["temperature", "water-level"]
-topic="response-token"
+topic="test/topic"
 
 # Create a new MQTT client instance
 client = mqtt.Client()
