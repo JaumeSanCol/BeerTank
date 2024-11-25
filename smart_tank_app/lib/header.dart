@@ -33,14 +33,26 @@ class HeaderDrawer extends StatelessWidget {
       child: ListView(
         padding: EdgeInsets.zero,
         children: <Widget>[
-          const DrawerHeader(
-            decoration: BoxDecoration(
+          DrawerHeader(
+            decoration: const BoxDecoration(
               color: Colors.amber,
             ),
-            child: Text(
-              'Menu',
-              style: TextStyle(color: Colors.black, fontSize: 24),
-            ),
+            child: ListView(
+              children: [
+                Text(
+                  'Smart Tank App',
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontSize: 24,
+                  ),
+                ),
+                Text(
+                  'ID: ${ApiService.getUserId()}',
+                  style: TextStyle(color: Colors.black, fontSize: 20),
+                )
+              ],
+            )
+
           ),
           ListTile(
             leading: const Icon(Icons.home),
