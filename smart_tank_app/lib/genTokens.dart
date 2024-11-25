@@ -135,13 +135,10 @@ class _GenTokensPageState extends State<GenTokensPage> {
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             TextField(
-              controller: _customerIdController,
-              decoration: const InputDecoration(
-                hintText: 'Enter Customer ID',
-              ),
+              controller: _customerIdController..text = ApiService.getUserId().toString(), // Set initial value
               keyboardType: TextInputType.number,
               inputFormatters: [
-                FilteringTextInputFormatter.digitsOnly,
+              FilteringTextInputFormatter.digitsOnly,
               ],
             ),
             const SizedBox(height: 20),
