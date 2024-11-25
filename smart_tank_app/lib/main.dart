@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:smart_tank_app/establishment.dart';
 import 'package:smart_tank_app/load_tokens_page.dart';
 import 'package:smart_tank_app/login_page.dart';
 import 'header.dart';
@@ -55,6 +56,7 @@ class _MyHomePageState extends State<MyHomePage> {
   List<Token> tokens = []; // List to hold fetched tokens
   Token? selectedToken;
   bool isLoading = true; // Indicator for loading state
+  Map<int, String> establishmentNames = {}; // Map to hold establishment names
 
   @override
   void initState() {
@@ -68,11 +70,12 @@ class _MyHomePageState extends State<MyHomePage> {
       // Fetch establishments
       final establishmentResponse = await ApiService.getRequest('/info/establishments', requiresAuth: true);
       if (establishmentResponse.statusCode == 200) {
-        final List<dynamic> establishments = jsonDecode(establishmentResponse.body);
+        final List<Establishment> establishments = Establishment.fromJsonList(jsonDecode(establishmentResponse.body));        
 
         // Iterate over each establishment and fetch tokens
         for (var establishment in establishments) {
-          int establishmentId = establishment['id'];
+          int establishmentId = establishment.id;
+          establishmentNames[establishmentId] = establishment.name;
           await _fetchTokensForEstablishment(establishmentId);
         }
       } else {
@@ -94,7 +97,6 @@ class _MyHomePageState extends State<MyHomePage> {
       final tokenResponse = await ApiService.getRequest('/user/establishment/$establishmentId', requiresAuth: true);
       if (tokenResponse.statusCode == 200) {
         final List<dynamic> establishmentTokens = jsonDecode(tokenResponse.body);
-        print(establishmentTokens);
         setState(() {
           tokens.addAll(establishmentTokens.map((data) => Token(
             data['id'],
@@ -154,7 +156,7 @@ class _MyHomePageState extends State<MyHomePage> {
                             .where((token) => token.establishmentId == establishmentId)
                             .toList();
                         return ExpansionTile(
-                          title: Text('Establishment $establishmentId'),
+                          title: Text('${establishmentNames[establishmentId]}'),
                           children: establishmentTokens.map((token) {
                             return ListTile(
                               title: Text('Token ${token.id}'),
