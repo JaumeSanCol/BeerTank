@@ -65,13 +65,6 @@ class HeaderDrawer extends StatelessWidget {
             },
           ),
           ListTile(
-            leading: const Icon(Icons.account_circle),
-            title: const Text('Profile'),
-            onTap: () {
-              // Navigate to Profile Page
-            },
-          ),
-          ListTile(
             leading: const Icon(Icons.token), // Custom icon for token generation
             title: const Text('Generate Tokens'),
             onTap: () {
@@ -79,13 +72,6 @@ class HeaderDrawer extends StatelessWidget {
                 context,
                 MaterialPageRoute(builder: (context) => const GenTokensPage()),
               );
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.info),
-            title: const Text('About'),
-            onTap: () {
-              // Navigate to About Page
             },
           ),
           const Divider(),

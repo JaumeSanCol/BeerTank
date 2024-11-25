@@ -16,7 +16,7 @@ class Establishment {
       id: json['id'],
       name: json['name'],
       address: json['address'],
-      price: json['price'],
+      price: (json['price'] as num).toDouble(),
     );
   }
   

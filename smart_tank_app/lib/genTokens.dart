@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:smart_tank_app/establishment.dart';
 import 'header.dart'; // Import the reusable header
 import 'api_service.dart'; // Import the ApiService for API calls
 import 'package:flutter/services.dart'; // For restricting input
@@ -17,13 +18,14 @@ class _GenTokensPageState extends State<GenTokensPage> {
   final TextEditingController _customerIdController = TextEditingController();
   String? _selectedEstablishment; // Initially null until fetched
   int _tokenQuantity = 1;
+  double _totalPrice = 0.00;
 
-  List<Map<String, dynamic>> _establishments = []; // List to store establishments data
+  Map<String, Establishment> _establishments = {}; // List to store establishments data
 
   @override
   void initState() {
     super.initState();
-    _fetchEstablishments(); // Fetch establishments on init
+    _fetchEstablishments();
   }
 
   // Function to fetch establishments from the API
@@ -34,14 +36,11 @@ class _GenTokensPageState extends State<GenTokensPage> {
         // Parse the response and set up the establishments list
         final List<dynamic> data = jsonDecode(response.body); // Assuming response data is in JSON list format
         setState(() {
-          _establishments = data
-              .map((item) => {
-            'id': item['id'],
-            'name': item['name'],
-          })
-              .toList();
+          for (var establishment in data) {
+            _establishments[establishment['name']] = Establishment.fromJson(establishment);
+          }
           if (_establishments.isNotEmpty) {
-            _selectedEstablishment = _establishments.first['name']; // Set default selection
+            _selectedEstablishment = _establishments.keys.first; // Set default selection
           }
         });
       } else if (response.statusCode == 403) {
@@ -53,12 +52,18 @@ class _GenTokensPageState extends State<GenTokensPage> {
       showErrorDialog(context, 'An error occurred while loading establishments.');
       print(e);
     }
+    finally {
+      setState(() {
+        _totalPrice = _tokenQuantity * _establishments[_selectedEstablishment]!.price;
+      });
+    }
   }
 
   // Function to increase quantity
   void _incrementTokens() {
     setState(() {
       _tokenQuantity++;
+      _totalPrice = _tokenQuantity * _establishments[_selectedEstablishment]!.price;
     });
   }
 
@@ -67,6 +72,7 @@ class _GenTokensPageState extends State<GenTokensPage> {
     setState(() {
       if (_tokenQuantity > 1) {
         _tokenQuantity--;
+        _totalPrice = _tokenQuantity * _establishments[_selectedEstablishment]!.price;
       }
     });
   }
@@ -82,11 +88,9 @@ class _GenTokensPageState extends State<GenTokensPage> {
     }
 
     // Find the establishment by name
-    final selectedEstablishment = _establishments.firstWhere(
-          (establishment) => establishment['name'] == _selectedEstablishment,
-    );
+    final selectedEstablishment = _establishments[_selectedEstablishment];
 
-    final establishmentID = selectedEstablishment['id'];
+    final establishmentID = _establishments[selectedEstablishment]?.id;
     print('establishmentID = $establishmentID');
     // Ensure Customer ID is not empty
     if (customerId.isEmpty) {
@@ -150,13 +154,14 @@ class _GenTokensPageState extends State<GenTokensPage> {
               value: _selectedEstablishment,
               onChanged: (String? newValue) {
                 setState(() {
+                  _totalPrice = _tokenQuantity * _establishments[newValue!]!.price;
                   _selectedEstablishment = newValue!;
                 });
               },
-              items: _establishments.map<DropdownMenuItem<String>>((establishment) {
+              items: _establishments.keys.map<DropdownMenuItem<String>>((String value) {
                 return DropdownMenuItem<String>(
-                  value: establishment['name'],
-                  child: Text(establishment['name']),
+                  value: value,
+                  child: Text(value),
                 );
               }).toList(),
             ),
@@ -180,6 +185,9 @@ class _GenTokensPageState extends State<GenTokensPage> {
                   onPressed: _incrementTokens,
                 ),
               ],
+            ),
+            Text(
+              'Price: ${_totalPrice.toStringAsFixed(2)}€',
             ),
             const Spacer(),
             Center(
