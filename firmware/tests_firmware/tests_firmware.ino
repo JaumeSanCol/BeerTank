@@ -100,15 +100,24 @@ void loop() {
 
     PrintUID(mfrc522.uid.uidByte, mfrc522.uid.size);
     bool existsUID = true;  //= CompareUID(mfrc522.uid.uidByte, mfrc522.uid.size);
-    //byte buffer[10];
-    //ReadDataBlock(0, buffer, 10);
+    byte buffer[18];
+
     if (existsUID) {
       digitalWrite(LED_PIN, HIGH);
       digitalWrite(VALVE_PIN, HIGH);
       Serial.println("VALVE ACTIVATED");
-      //PrintBuffer(buffer, 10);
+      PrintBuffer(buffer, sizeof(buffer));
       isPouring = true;
     }
+
+    for(int i = 0; i<16*4; i++){
+      bool res = ReadDataBlock(i, buffer, sizeof(buffer));
+      if(res){
+        Serial.print("data: ");
+        PrintBuffer(buffer, sizeof(buffer));
+      }
+    }
+
     mfrc522.PICC_HaltA();
   }
 
@@ -124,17 +133,17 @@ void loop() {
   }
 }
 
-/*
-void ReadDataBlock(int block, byte* buffer, int buffersize){
-  byte status = mfrc522.MIFARE_Read(0, buffer, &buffersize);
+
+bool ReadDataBlock(byte block, byte* buffer, byte buffersize){
+  MFRC522::StatusCode status;
+  status = mfrc522.MIFARE_Read(0, buffer, &buffersize);
   if(status != MFRC522::STATUS_OK){
-    Serial.print("MIFARE_read() failed!");
+    Serial.print("MIFARE_read() failed! ");
     Serial.println(mfrc522.GetStatusCodeName(status));
-    return 4;
+    return false;
   }
-  Serial.println("Block was read!");
+  return true;
 }
-*/
 
 
 void PouringRoutine(){
@@ -240,14 +249,14 @@ bool CompareUID(byte* buffer, byte buffersize) {
 void PrintBuffer(byte* buffer, byte buffersize) {
   for (int i = 0; i < buffersize; i++) {
     Serial.print(buffer[i]);
+    Serial.print(" ");
   }
   Serial.println();
 }
 
 void PrintUID(byte* buffer, byte buffersize) {
   for (int i = 0; i < buffersize; i++) {
-    Serial.print(buffer[i]);
-    Serial.print(" ");
+    Serial.print((char)buffer[i]);
   }
   Serial.println();
 }
