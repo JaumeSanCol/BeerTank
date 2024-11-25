@@ -1,6 +1,6 @@
-#include "lib/bt_mqtt.h"
-#include "lib/bt_https.h"
-#include "lib/config.h"
+#include "bt_mqtt.h"
+#include "bt_https.h"
+#include "config.h"
 
 #include <WiFi.h>
 #include <PubSubClient.h>
@@ -16,7 +16,7 @@ void setup() {
     while (!Serial);
 
     connectToWiFi();
-    setupMQTT();
+    setupMQTT(client);
     loginToCloud();
 }
 
@@ -29,7 +29,7 @@ void loop() {
     else if (!client.connected()) {
         reconnectMQTT(client);
       
-        CLIENT.loop();
+        client.loop();
         validateToken(1);
         
     }

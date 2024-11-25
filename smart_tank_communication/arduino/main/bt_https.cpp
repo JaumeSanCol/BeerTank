@@ -1,6 +1,5 @@
 #include "bt_https.h"
 #include "config.h"
-#include <WiFi.h>
 #include <WiFiClientSecure.h>
 
 void loginToCloud()
