@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:smart_tank_app/mqtt_service.dart';
 import 'package:smart_tank_app/stats_page.dart';
 import 'establishments_page.dart';
 
 class Tank {
   final int id;
   final String name;
-  final double level;
+  double level;
   final int beersServed;
-  final double temperature;
+  double temperature;
 
   Tank({
     required this.id,
@@ -29,7 +30,7 @@ class Tank {
 }
 
 Future<List<Tank>> fetchTanks(int establishmentId) async {
-  await Future.delayed(Duration(milliseconds: 500));
+  await Future.delayed(Duration(milliseconds: 500)); // Simulate API delay
 
   return [
     Tank(id: 1, name: "BeerTank #1", level: 2.3, beersServed: 5, temperature: 7),
@@ -39,82 +40,108 @@ Future<List<Tank>> fetchTanks(int establishmentId) async {
 
 class TankList extends StatefulWidget {
   final Establishment establishment;
+  final MqttService mqttService;
 
-  TankList({required this.establishment});
+  TankList({required this.establishment, required this.mqttService});
 
   @override
   _TankListState createState() => _TankListState();
 }
 
 class _TankListState extends State<TankList> {
-  late Future<List<Tank>> futureTanks;
+  late List<Tank> tanks;
+  late MqttService mqttService;
 
-  @override
-  void didUpdateWidget(covariant TankList oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.establishment.id != widget.establishment.id) {
-      setState(() {
-        futureTanks = fetchTanks(widget.establishment.id);
-      });
-    }
-  }
+  bool isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    futureTanks = fetchTanks(widget.establishment.id);
+    mqttService = widget.mqttService;
+    _fetchAndSetTanks();
+
+    mqttService.messageStream.listen((message) {
+      final String messageTankId = message['tankId'] ?? '';
+      final String messageValue = message['value'] ?? '';
+      final String messageTopic = message['topic'] ?? '';
+
+      final int tankId = int.tryParse(messageTankId) ?? -1;
+      final double parsedValue = double.tryParse(messageValue) ?? 0.0;
+
+      setState(() {
+        for (Tank tank in tanks) {
+          if (tank.id == tankId) {
+            if (messageTopic == 'temperature') {
+              tank.temperature = parsedValue;
+            } else if (messageTopic == 'water-level') {
+              tank.level = parsedValue;
+            }
+          }
+        }
+      });
+    });
+  }
+
+  Future<void> _fetchAndSetTanks() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    try {
+      final fetchedTanks = await fetchTanks(widget.establishment.id);
+      setState(() {
+        tanks = fetchedTanks;
+        isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        isLoading = false;
+      });
+      print('Error fetching tanks: $e');
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    if (isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
     return Scaffold(
-      body: FutureBuilder<List<Tank>>(
-        future: futureTanks,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return Center(child: Text('No tanks available'));
-          }
+      body: ListView.builder(
+        itemCount: tanks.length,
+        itemBuilder: (context, index) {
+          final tank = tanks[index];
 
-          final tanks = snapshot.data!;
-
-          return ListView.builder(
-            itemCount: tanks.length,
-            itemBuilder: (context, index) {
-              final tank = tanks[index];
-
-              return InkWell(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => StatsPage(tank: tank))
-                  );
-                },
-                child: Container(
-                  margin: EdgeInsets.all(10),
-                  padding: EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: Colors.amberAccent,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        tank.name,
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.black),
-                      ),
-                      SizedBox(height: 8),
-                      Text("Level: ${tank.level} L", style: TextStyle(color: Colors.black),),
-                      Text("Beers served: ${tank.beersServed}", style: TextStyle(color: Colors.black),),
-                      Text("Temperature: ${tank.temperature}°C", style: TextStyle(color: Colors.black),),
-                    ],
-                  ),
+          return InkWell(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => StatsPage(tank: tank, mqttService: mqttService),
                 ),
               );
             },
+            child: Container(
+              margin: EdgeInsets.all(10),
+              padding: EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.amberAccent,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    tank.name,
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.black),
+                  ),
+                  SizedBox(height: 8),
+                  Text("Level: ${tank.level.toStringAsFixed(1)} L", style: TextStyle(color: Colors.black)),
+                  Text("Beers served: ${tank.beersServed}", style: TextStyle(color: Colors.black)),
+                  Text("Temperature: ${tank.temperature.toStringAsFixed(1)}°C", style: TextStyle(color: Colors.black)),
+                ],
+              ),
+            ),
           );
         },
       ),

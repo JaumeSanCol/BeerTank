@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:smart_tank_app/tanks_list.dart';
 import 'header.dart';
+import 'mqtt_service.dart';
 
 class Establishment {
   final int id;
@@ -38,11 +39,29 @@ class EstablishmentPage extends StatefulWidget{
 class _EstablishmentsPageState extends State<EstablishmentPage> {
   Establishment? selectedEstablishment;
   late Future<List<Establishment>> futureEstablishments;
+  late MqttService mqttService;
 
   @override
   void initState() {
     super.initState();
     futureEstablishments = fetchEstablishments();
+    _initializeMqttService();
+  }
+
+  void _initializeMqttService() {
+    mqttService = MqttService(
+      broker: '95.94.45.83',
+      port: 1883,
+      username: 'pi',
+      password: 'vfpYcu8BVUB26kgtk73sADxYVJ2O3URc62SWs80n',
+      topics: ['temperature', 'water-level'],
+    );
+
+    mqttService.initializeMqtt().then((_) {
+      print('MQTT Service Initialized');
+    }).catchError((error) {
+      print('Error initializing MQTT: $error');
+    });
   }
 
   @override
@@ -82,7 +101,7 @@ class _EstablishmentsPageState extends State<EstablishmentPage> {
                       child: DropdownButton<Establishment>(
                         hint: Text('Select an Establishment'),
                         value: selectedEstablishment,
-                        isExpanded: true, // Allows the dropdown to take up the full width
+                        isExpanded: true,
                         items: establishments.map((establishment) {
                           return DropdownMenuItem<Establishment>(
                             value: establishment,
@@ -111,7 +130,7 @@ class _EstablishmentsPageState extends State<EstablishmentPage> {
           ),
           if (selectedEstablishment != null)
             Expanded(
-              child: TankList(establishment: selectedEstablishment!),
+              child: TankList(establishment: selectedEstablishment!, mqttService: mqttService),
             ),
         ],
       ),
