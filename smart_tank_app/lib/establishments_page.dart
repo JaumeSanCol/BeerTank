@@ -75,22 +75,37 @@ class _EstablishmentsPageState extends State<EstablishmentPage> {
 
               return Padding(
                 padding: const EdgeInsets.fromLTRB(15, 10, 15, 10),
-                child: DropdownButton<Establishment>(
-                  hint: Text('Select an Establishment'),
-                  value: selectedEstablishment,
-                  isExpanded: true,
-                  items: establishments.map((establishment) {
-                    return DropdownMenuItem<Establishment>(
-                      value: establishment,
-                      child: Text(establishment.name),
-                    );
-                  }).toList(),
-                  onChanged: (newEstablishment) {
-                    setState(() {
-                      selectedEstablishment = newEstablishment;
-                    });
-                  },
-                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    Expanded(
+                      child: DropdownButton<Establishment>(
+                        hint: Text('Select an Establishment'),
+                        value: selectedEstablishment,
+                        isExpanded: true, // Allows the dropdown to take up the full width
+                        items: establishments.map((establishment) {
+                          return DropdownMenuItem<Establishment>(
+                            value: establishment,
+                            child: Text(establishment.name),
+                          );
+                        }).toList(),
+                        onChanged: (newEstablishment) {
+                          setState(() {
+                            selectedEstablishment = newEstablishment;
+                          });
+                        },
+                      ),
+                    ),
+                    SizedBox(width: 10),
+                    IconButton(
+                      onPressed: () {
+                        print('Go to Add Establishment Page');
+                      },
+                      icon: Icon(Icons.add),
+                      focusColor: Colors.amberAccent,
+                    ),
+                  ],
+                )
               );
             },
           ),

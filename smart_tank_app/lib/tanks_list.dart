@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:smart_tank_app/stats_page.dart';
 import 'establishments_page.dart';
 
 class Tank {
@@ -87,7 +88,10 @@ class _TankListState extends State<TankList> {
 
               return InkWell(
                 onTap: () {
-                  print('Clicked on tank: ${tank.name}');
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => StatsPage(tank: tank))
+                  );
                 },
                 child: Container(
                   margin: EdgeInsets.all(10),
