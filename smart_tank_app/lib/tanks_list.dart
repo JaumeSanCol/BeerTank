@@ -1,48 +1,51 @@
+import 'dart:async';
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:smart_tank_app/mqtt_service.dart';
 import 'package:smart_tank_app/stats_page.dart';
+import 'api_service.dart';
+import 'dialog_utils.dart';
 import 'establishments_page.dart';
 
 class Tank {
   final int id;
-  final String name;
   double level;
   final int beersServed;
-  double temperature;
+  double temp;
+  final int establishmentId;
+  final DateTime createdAt;
+  final DateTime updatedAt;
 
   Tank({
     required this.id,
-    required this.name,
     required this.level,
     required this.beersServed,
-    required this.temperature,
+    required this.temp,
+    required this.establishmentId,
+    required this.createdAt,
+    required this.updatedAt,
   });
 
+  // Factory constructor to create a Tank from JSON
   factory Tank.fromJson(Map<String, dynamic> json) {
     return Tank(
       id: json['id'],
-      name: json['name'],
-      level: json['level'],
+      level: (json['level'] as num).toDouble(),
       beersServed: json['beersServed'],
-      temperature: json['temperature'],
+      temp: (json['temp'] as num).toDouble(),
+      establishmentId: json['EstablishmentId'],
+      createdAt: DateTime.parse(json['createdAt']),
+      updatedAt: DateTime.parse(json['updatedAt']),
     );
   }
-}
-
-Future<List<Tank>> fetchTanks(int establishmentId) async {
-  await Future.delayed(Duration(milliseconds: 500)); // Simulate API delay
-
-  return [
-    Tank(id: 1, name: "BeerTank #1", level: 2.3, beersServed: 5, temperature: 7),
-    Tank(id: 2, name: "BeerTank #2", level: establishmentId.toDouble(), beersServed: 10, temperature: 6),
-  ];
 }
 
 class TankList extends StatefulWidget {
   final Establishment establishment;
   final MqttService mqttService;
 
-  TankList({required this.establishment, required this.mqttService});
+  TankList({required ValueKey<int> key, required this.establishment, required this.mqttService});
 
   @override
   _TankListState createState() => _TankListState();
@@ -58,6 +61,7 @@ class _TankListState extends State<TankList> {
   void initState() {
     super.initState();
     mqttService = widget.mqttService;
+    tanks = [];
     _fetchAndSetTanks();
 
     mqttService.messageStream.listen((message) {
@@ -72,7 +76,7 @@ class _TankListState extends State<TankList> {
         for (Tank tank in tanks) {
           if (tank.id == tankId) {
             if (messageTopic == 'temperature') {
-              tank.temperature = parsedValue;
+              tank.temp = parsedValue;
             } else if (messageTopic == 'water-level') {
               tank.level = parsedValue;
             }
@@ -82,13 +86,24 @@ class _TankListState extends State<TankList> {
     });
   }
 
+  @override
+  void didUpdateWidget(covariant TankList oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.establishment.id != widget.establishment.id) {
+      setState(() {
+        tanks = [];
+        _fetchAndSetTanks();
+      });
+    }
+  }
+
   Future<void> _fetchAndSetTanks() async {
     setState(() {
       isLoading = true;
     });
 
     try {
-      final fetchedTanks = await fetchTanks(widget.establishment.id);
+      final fetchedTanks = await _fetchTanksForEstablishment(widget.establishment.id);
       setState(() {
         tanks = fetchedTanks;
         isLoading = false;
@@ -99,6 +114,27 @@ class _TankListState extends State<TankList> {
       });
       print('Error fetching tanks: $e');
     }
+  }
+
+  Future<List<Tank>> _fetchTanksForEstablishment(int establishmentId) async {
+    try {
+      final response = await ApiService.getRequest('/user/establishment/$establishmentId/tanks', requiresAuth: true);
+      if (response.statusCode == 200) {
+        final List<dynamic> tanks = jsonDecode(response.body);
+        print("PRINTING TANKSSSSssssssssssssssssss");
+        print(tanks);
+        return tanks.map((item) {
+          return Tank.fromJson(item as Map<String, dynamic>);
+        }).toList();
+      } else {
+        showErrorDialog(context, 'Failed to fetch tanks');
+        return List.empty();
+      }
+    } catch (e) {
+      showErrorDialog(context, 'An error occurred while fetching tanks.');
+      print(e);
+    }
+    return List.empty();
   }
 
   @override
@@ -114,6 +150,7 @@ class _TankListState extends State<TankList> {
           final tank = tanks[index];
 
           return InkWell(
+            key: ValueKey(tank.id),
             onTap: () {
               Navigator.push(
                 context,
@@ -132,13 +169,13 @@ class _TankListState extends State<TankList> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    tank.name,
+                    "Tank #${tank.id}",
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.black),
                   ),
                   SizedBox(height: 8),
                   Text("Level: ${tank.level.toStringAsFixed(1)} L", style: TextStyle(color: Colors.black)),
                   Text("Beers served: ${tank.beersServed}", style: TextStyle(color: Colors.black)),
-                  Text("Temperature: ${tank.temperature.toStringAsFixed(1)}°C", style: TextStyle(color: Colors.black)),
+                  Text("Temperature: ${tank.temp.toStringAsFixed(1)}°C", style: TextStyle(color: Colors.black)),
                 ],
               ),
             ),

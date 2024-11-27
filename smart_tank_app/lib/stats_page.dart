@@ -56,7 +56,7 @@ class _StatsPageState extends State<StatsPage> {
 
     tank = widget.tank;
 
-    temperature = tank.temperature;
+    temperature = tank.temp;
     level = tank.level;
 
     _mqttSubscription = widget.mqttService.messageStream.listen((message) {

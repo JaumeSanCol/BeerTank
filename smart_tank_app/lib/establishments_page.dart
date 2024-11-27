@@ -1,30 +1,40 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:smart_tank_app/tanks_list.dart';
+import 'dialog_utils.dart';
 import 'header.dart';
 import 'mqtt_service.dart';
+import 'api_service.dart';
 
 class Establishment {
   final int id;
   final String name;
+  final String address;
+  final double price;
+  final DateTime createdAt;
+  final DateTime updatedAt;
 
-  Establishment({required this.id, required this.name});
+  Establishment({
+    required this.id,
+    required this.name,
+    required this.address,
+    required this.price,
+    required this.createdAt,
+    required this.updatedAt,
+  });
 
+  // Factory constructor to create an Establishment from JSON
   factory Establishment.fromJson(Map<String, dynamic> json) {
     return Establishment(
       id: json['id'],
       name: json['name'],
+      address: json['address'],
+      price: (json['price'] as num).toDouble(),
+      createdAt: DateTime.parse(json['createdAt']),
+      updatedAt: DateTime.parse(json['updatedAt']),
     );
   }
-}
-
-Future<List<Establishment>> fetchEstablishments() async {
-  await Future.delayed(Duration(milliseconds: 500));
-  return [
-    Establishment(id: 1, name: "Bar 1"),
-    Establishment(id: 2, name: "Bar 2"),
-    Establishment(id: 3, name: "Bar 3"),
-    Establishment(id: 4, name: "Bar 4"),
-  ];
 }
 
 
@@ -44,7 +54,7 @@ class _EstablishmentsPageState extends State<EstablishmentPage> {
   @override
   void initState() {
     super.initState();
-    futureEstablishments = fetchEstablishments();
+    futureEstablishments = _fetchEstablishments();
     _initializeMqttService();
   }
 
@@ -62,6 +72,26 @@ class _EstablishmentsPageState extends State<EstablishmentPage> {
     }).catchError((error) {
       print('Error initializing MQTT: $error');
     });
+  }
+
+  Future<List<Establishment>> _fetchEstablishments() async {
+    try {
+      // Fetch establishments
+      final establishmentResponse = await ApiService.getRequest('/info/establishments', requiresAuth: true);
+      if (establishmentResponse.statusCode == 200) {
+        final List<dynamic> establishments = jsonDecode(establishmentResponse.body);
+        return establishments.map((item) {
+          return Establishment.fromJson(item as Map<String, dynamic>);
+        }).toList();
+      } else {
+        showErrorDialog(context, 'Failed to fetch establishments');
+        return List.empty();
+      }
+    } catch (e) {
+      showErrorDialog(context, 'An error occurred while fetching establishments.');
+      print(e);
+    }
+    return List.empty();
   }
 
   @override
@@ -130,7 +160,11 @@ class _EstablishmentsPageState extends State<EstablishmentPage> {
           ),
           if (selectedEstablishment != null)
             Expanded(
-              child: TankList(establishment: selectedEstablishment!, mqttService: mqttService),
+              child: TankList(
+                key: ValueKey(selectedEstablishment!.id),
+                establishment: selectedEstablishment!,
+                mqttService: mqttService,
+              ),
             ),
         ],
       ),
