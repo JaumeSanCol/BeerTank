@@ -47,11 +47,10 @@ void setup() {
   pinMode(FLUX_PIN, INPUT_PULLUP);
 
   //RFID
-  SPI.begin();
-  mfrc522.PCD_Init();
-  delay(4);
-  mfrc522.PCD_DumpVersionToSerial();
-  Serial.println(F("Scan PICC to see UID, SAK, type, and data blocks..."));
+  Serial.begin(9600); // Inizializza la seriale
+  SPI.begin(); // Inizializza SPI
+  mfrc522.PCD_Init(); // Inizializza il modulo MFRC522
+  Serial.println("Avvicina un tag NFC al lettore...");
 
   //TEST POPULATION
   byte sbyte[7] = { 4, 197, 86, 97, 16, 2, 137 };
@@ -82,10 +81,8 @@ void setup() {
 }
 
 void loop() {
-
-
   if (!isPouring) {
-    // reset del ciclo quando nessuna scheda è inserita nel lettore
+    // Reset del ciclo quando nessuna scheda è inserita nel lettore
     if (!mfrc522.PICC_IsNewCardPresent()) {
       return;
     }
@@ -94,31 +91,60 @@ void loop() {
       return;
     }
 
-    // visualizza l'UID sulla porta seriale di Arduino IDE
-    //mfrc522.PICC_DumpToSerial(&(mfrc522.uid));
+    // Visualizza l'UID sulla porta seriale di Arduino IDE
     MFRC522::PICC_Type PICC_Type = mfrc522.PICC_GetType(mfrc522.uid.sak);
+    if (PICC_Type != MFRC522::PICC_TYPE_MIFARE_UL) {
+      Serial.println("Questo tipo di tag non è supportato!");
+      mfrc522.PICC_HaltA();
+      return;
+    }
 
-    PrintUID(mfrc522.uid.uidByte, mfrc522.uid.size);
-    bool existsUID = true;  //= CompareUID(mfrc522.uid.uidByte, mfrc522.uid.size);
+  // Variabile per salvare la cifra trovata dopo "en"
+  char digitAfterEn = '\0';
+
+  // Legge i blocchi del tag
+  for (byte block = 0; block < 4; block++) { // Legge solo i primi 4 blocchi
     byte buffer[18];
+    byte size = sizeof(buffer);
+    MFRC522::StatusCode status = mfrc522.MIFARE_Read(block, buffer, &size);
+
+    if (status == MFRC522::STATUS_OK) {
+      String data = "";
+      for (byte i = 0; i < 16; i++) {
+        // Costruisce una stringa con i caratteri leggibili
+        if (isPrintable(buffer[i])) {
+          data += (char)buffer[i];
+        }
+      }
+
+      // Cerca la stringa "en" e salva la prima cifra successiva
+      int index = data.indexOf("en");
+      if (index >= 0 && index + 2 < data.length()) { // Assicurati che ci sia qualcosa dopo "en"
+        char potentialDigit = data.charAt(index + 2); // Primo carattere dopo "en"
+        if (isDigit(potentialDigit)) { // Verifica se è una cifra
+          digitAfterEn = potentialDigit;
+          break; // Esci dal ciclo una volta trovata la cifra
+        }
+      }
+    }
+  }
+   
+    bool existsUID = true;  // = CompareUID(mfrc522.uid.uidByte, mfrc522.uid.size);
 
     if (existsUID) {
       digitalWrite(LED_PIN, HIGH);
       digitalWrite(VALVE_PIN, HIGH);
       Serial.println("VALVE ACTIVATED");
-      PrintBuffer(buffer, sizeof(buffer));
+
       isPouring = true;
     }
 
-    for(int i = 0; i<16*4; i++){
-      bool res = ReadDataBlock(i, buffer, sizeof(buffer));
-      if(res){
-        Serial.print("data: ");
-        PrintBuffer(buffer, sizeof(buffer));
-      }
-    }
+    mfrc522.PICC_HaltA(); // Ferma la comunicazione con la carta
 
-    mfrc522.PICC_HaltA();
+    // Stampa solo la cifra trovata, se esiste
+    if (digitAfterEn != '\0') {
+      Serial.println(digitAfterEn); // Stampa SOLO la prima cifra
+    }
   }
 
   if (isPouring) {
@@ -132,6 +158,7 @@ void loop() {
     isPouring = false;
   }
 }
+
 
 
 bool ReadDataBlock(byte block, byte* buffer, byte buffersize){
@@ -180,37 +207,6 @@ void PouringRoutine(){
 }
 
 /*
-void PouringRoutine() {
-  if (pouringEnded) {
-    total_volume = 0;
-    flow_count = 0;
-    prev_count = 0;  // Inizializza prev_count
-    pouringEnded = false;
-  }
-
-  if ((millis() - prev_time) > 1000) {
-    // Verifica se c'è stato un cambiamento nel conteggio degli impulsi
-    b_wheel_turning = (flow_count == prev_count) ? false : true;
-
-    // Calcola solo il volume aggiuntivo dagli impulsi nuovi
-    total_volume += (flow_count - prev_count) * volume_per_pulse;
-
-    prev_count = flow_count;
-    prev_time = millis();
-
-    Serial.print("flow_count: ");
-    Serial.println(flow_count);
-    Serial.print("b_wheel_turning: ");
-    Serial.println(b_wheel_turning);
-    Serial.print("Total Volume (ml): ");
-    Serial.println(total_volume);
-    Serial.println("");
-  }
-  if (total_volume > 200) {
-    pouringEnded = true;
-  }
-}
-
 
 bool CompareUID(byte* buffer, byte buffersize) {
   if (buffersize != 7) {
@@ -265,3 +261,8 @@ void PrintUID(byte* buffer, byte buffersize) {
 void PulseCounter() {
   pulseCount++;
 }
+
+bool isPrintable(byte c) {
+  return (c >= 32 && c <= 126); // ASCII stampabili
+}
+
