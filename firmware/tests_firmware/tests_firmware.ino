@@ -1,6 +1,7 @@
 #include "SPI.h"
 #include "MFRC522.h"
 #include "Vector.h"
+#include <dht11.h>
 #include <string.h>
 
 #define RST_PIN 9  // RES pin
@@ -8,19 +9,25 @@
 #define LED_PIN 6
 #define VALVE_PIN 4
 #define FLUX_PIN 3
+#define DHT11_PIN 5
 
 struct UID {
   String name;
   byte uid[7];
 };
 
-//RFID
+// TEMPERATURE
+dht11 DHT11; 
+unsigned long lastReadTime = 0; // Variabile per tracciare l'ultimo momento di lettura
+const unsigned long interval = 5000;
+
+// RFID
 MFRC522 mfrc522(SS_PIN, RST_PIN);
 Vector<UID> UIDs;
 bool isPouring = false;
 bool pouringEnded = true;
 
-//FLUX SENSOR
+// FLUX SENSOR
 volatile int pulseCount;
 float flowRate;
 unsigned long flowMilliLitres;
@@ -28,26 +35,14 @@ unsigned long totalMilliLitres;
 unsigned long oldTime;
 float calibrationFactor = 4.5;
 
-/*
-unsigned int flow_count = 0;
-unsigned int prev_count = 0;
-unsigned long prev_time = millis();
-bool b_wheel_turning = false;
-float volume_per_pulse = 2.25;  //volume in ml per pulse (sensor YF-S201)
-float total_volume = 0.0;
-*/
-
 void setup() {
-
-  pinMode(VALVE_PIN, OUTPUT);
-
 
   Serial.begin(9600);
   pinMode(LED_PIN, OUTPUT);
   pinMode(FLUX_PIN, INPUT_PULLUP);
+  pinMode(VALVE_PIN, OUTPUT);
 
   //RFID
-  Serial.begin(9600); // Inizializza la seriale
   SPI.begin(); // Inizializza SPI
   mfrc522.PCD_Init(); // Inizializza il modulo MFRC522
   Serial.println("Avvicina un tag NFC al lettore...");
@@ -157,8 +152,27 @@ void loop() {
     digitalWrite(VALVE_PIN, LOW);
     isPouring = false;
   }
+
+  // TEMPERATURE AND HUMIDITY
+  ReadTemperature();
 }
 
+
+void ReadTemperature(){
+
+  unsigned long currentTime = millis();
+  if (currentTime - lastReadTime >= interval) {
+    lastReadTime = currentTime;
+    int chk = DHT11.read(DHT11_PIN);
+    Serial.print("Humidity (%): ");
+    Serial.println((float)DHT11.humidity, 2);
+
+    Serial.print("Temperature  (C): ");
+    Serial.println((float)DHT11.temperature, 2);
+
+    // We should send the temperature to the cloud?
+  }
+}
 
 
 bool ReadDataBlock(byte block, byte* buffer, byte buffersize){
