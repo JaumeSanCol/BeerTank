@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:smart_tank_app/tanks_list.dart';
+import 'package:smart_tank_app/establishment_page.dart';
 import 'dialog_utils.dart';
 import 'header.dart';
 import 'mqtt_service.dart';
@@ -24,7 +24,6 @@ class Establishment {
     required this.updatedAt,
   });
 
-  // Factory constructor to create an Establishment from JSON
   factory Establishment.fromJson(Map<String, dynamic> json) {
     return Establishment(
       id: json['id'],
@@ -38,16 +37,15 @@ class Establishment {
 }
 
 
-class EstablishmentPage extends StatefulWidget{
-  const EstablishmentPage({super.key});
+class EstablishmentsPage extends StatefulWidget{
+  const EstablishmentsPage({super.key});
 
   @override
   State<StatefulWidget> createState() => _EstablishmentsPageState();
 
 }
 
-class _EstablishmentsPageState extends State<EstablishmentPage> {
-  Establishment? selectedEstablishment;
+class _EstablishmentsPageState extends State<EstablishmentsPage> {
   late Future<List<Establishment>> futureEstablishments;
   late MqttService mqttService;
 
@@ -76,7 +74,6 @@ class _EstablishmentsPageState extends State<EstablishmentPage> {
 
   Future<List<Establishment>> _fetchEstablishments() async {
     try {
-      // Fetch establishments
       final establishmentResponse = await ApiService.getRequest('/info/establishments', requiresAuth: true);
       if (establishmentResponse.statusCode == 200) {
         final List<dynamic> establishments = jsonDecode(establishmentResponse.body);
@@ -99,76 +96,77 @@ class _EstablishmentsPageState extends State<EstablishmentPage> {
     return Scaffold(
       appBar: const Header(title: 'Establishments'),
       drawer: const HeaderDrawer(),
-      body: Column(
-        children: [
-          FutureBuilder<List<Establishment>>(
-            future: futureEstablishments,
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return Center(child: CircularProgressIndicator());
-              } else if (snapshot.hasError) {
-                return Center(child: Text('Error: ${snapshot.error}'));
-              } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                return Center(child: Text('No establishments available'));
-              }
+      body: Padding(
+        padding: EdgeInsets.fromLTRB(0, 20, 0, 0),
+        child: FutureBuilder<List<Establishment>>(
+          future: futureEstablishments,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            } else if (snapshot.hasError) {
+              return Center(child: Text('Error: ${snapshot.error}'));
+            } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+              return const Center(child: Text('No establishments available'));
+            }
 
-              final establishments = snapshot.data!;
+            final establishments = snapshot.data!;
 
-              if (selectedEstablishment == null && establishments.isNotEmpty) {
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  setState(() {
-                    selectedEstablishment = establishments.first;
-                  });
-                });
-              }
+            return ListView.builder(
+              itemCount: establishments.length,
+              itemBuilder: (context, index) {
+                final establishment = establishments[index];
 
-              return Padding(
-                padding: const EdgeInsets.fromLTRB(15, 10, 15, 10),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    Expanded(
-                      child: DropdownButton<Establishment>(
-                        hint: Text('Select an Establishment'),
-                        value: selectedEstablishment,
-                        isExpanded: true,
-                        items: establishments.map((establishment) {
-                          return DropdownMenuItem<Establishment>(
-                            value: establishment,
-                            child: Text(establishment.name),
-                          );
-                        }).toList(),
-                        onChanged: (newEstablishment) {
-                          setState(() {
-                            selectedEstablishment = newEstablishment;
-                          });
-                        },
+                return InkWell(
+                  key: ValueKey(establishment.id),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => EstablishmentsPage(
+                          establishment: establishment,
+                          mqttService: mqttService,
+                        ),
                       ),
+                    );
+                  },
+                  child: Container(
+                    margin: const EdgeInsets.all(10),
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: Colors.amberAccent,
+                      borderRadius: BorderRadius.circular(5),
                     ),
-                    SizedBox(width: 10),
-                    IconButton(
-                      onPressed: () {
-                        print('Go to Add Establishment Page');
-                      },
-                      icon: Icon(Icons.add),
-                      focusColor: Colors.amberAccent,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          establishment.name,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                            color: Colors.black,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          "Address: ${establishment.address}",
+                          style: const TextStyle(color: Colors.black),
+                        ),
+                        Text(
+                          "Price: \$${establishment.price.toStringAsFixed(2)}",
+                          style: const TextStyle(color: Colors.black),
+                        )
+                      ],
                     ),
-                  ],
-                )
-              );
-            },
-          ),
-          if (selectedEstablishment != null)
-            Expanded(
-              child: TankList(
-                key: ValueKey(selectedEstablishment!.id),
-                establishment: selectedEstablishment!,
-                mqttService: mqttService,
-              ),
-            ),
-        ],
-      ),
+                  ),
+                );
+              },
+            );
+          },
+        ),
+      )
     );
   }
+
 
 }

@@ -76,7 +76,7 @@ class HeaderDrawer extends StatelessWidget {
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const EstablishmentPage()),
+                MaterialPageRoute(builder: (context) => const EstablishmentsPage()),
               );
             },
           ),

@@ -6,18 +6,18 @@ import 'package:smart_tank_app/tanks_list.dart';
 
 import 'mqtt_service.dart';
 
-class StatsPage extends StatefulWidget {
+class StatisticsPage extends StatefulWidget {
   final Tank tank;
   final MqttService mqttService;
 
-  const StatsPage({super.key, required this.tank, required this.mqttService});
+  const StatisticsPage({super.key, required this.tank, required this.mqttService});
 
   @override
-  _StatsPageState createState() => _StatsPageState();
+  _StatisticsPageState createState() => _StatisticsPageState();
 
 }
 
-class _StatsPageState extends State<StatsPage> {
+class _StatisticsPageState extends State<StatisticsPage> {
   late StreamSubscription _mqttSubscription;
   late StreamController<Map<String, dynamic>> _statsController;
   late Timer _mockTimer;

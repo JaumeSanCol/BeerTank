@@ -3,7 +3,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:smart_tank_app/mqtt_service.dart';
-import 'package:smart_tank_app/stats_page.dart';
+import 'package:smart_tank_app/statistics_page.dart';
 import 'api_service.dart';
 import 'dialog_utils.dart';
 import 'establishments_page.dart';
@@ -121,8 +121,6 @@ class _TankListState extends State<TankList> {
       final response = await ApiService.getRequest('/user/establishment/$establishmentId/tanks', requiresAuth: true);
       if (response.statusCode == 200) {
         final List<dynamic> tanks = jsonDecode(response.body);
-        print("PRINTING TANKSSSSssssssssssssssssss");
-        print(tanks);
         return tanks.map((item) {
           return Tank.fromJson(item as Map<String, dynamic>);
         }).toList();
@@ -155,7 +153,7 @@ class _TankListState extends State<TankList> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => StatsPage(tank: tank, mqttService: mqttService),
+                  builder: (context) => StatisticsPage(tank: tank, mqttService: mqttService),
                 ),
               );
             },
@@ -164,6 +162,7 @@ class _TankListState extends State<TankList> {
               padding: EdgeInsets.all(10),
               decoration: BoxDecoration(
                 color: Colors.amberAccent,
+                borderRadius: BorderRadius.circular(5)
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
