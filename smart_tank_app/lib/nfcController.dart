@@ -1,4 +1,5 @@
 import 'package:nfc_manager/nfc_manager.dart';
+import 'package:smart_tank_app/api_service.dart';
 import 'package:smart_tank_app/token.dart';
 
 class NfcController {
@@ -53,8 +54,22 @@ class NfcController {
         readMessage.records[0].payload.every((element) => message.records[0].payload.contains(element)))
         {
         print('Token written to NFC tag successfully');
-        //TODO: update token status on the server
-        onWriteComplete(true);
+        
+        ApiService.postRequest(
+          '/user/token/update/${token.id}',
+          {'establishmentId': token.establishmentId, 'newStatus': 'cup' },
+          requiresAuth: true
+          ).then((response) {
+            if (response.statusCode == 200) {
+              print('Token status updated successfully on the cloud');
+              token.status = 'cup';
+              onWriteComplete(true);
+            } else {
+              print('Failed to update token status on the cloud');
+              token.status = "phone";
+              onWriteComplete(false);
+            }
+          });
       } else {
         print('Failed to write token to NFC tag');
         onWriteComplete(false);
