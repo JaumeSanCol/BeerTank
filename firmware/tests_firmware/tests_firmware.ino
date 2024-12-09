@@ -1,8 +1,17 @@
 #include "SPI.h"
 #include "MFRC522.h"
 #include "Vector.h"
+
+#include "bt_mqtt.h"
+
+#include "config.h"
+#include "Arduino.h"
+
+#include <WiFi.h>
+#include <PubSubClient.h>
 #include <dht11.h>
 #include <string.h>
+
 
 #define RST_PIN 9  // RES pin
 #define SS_PIN 10  // SDA (SS) pin
@@ -35,12 +44,23 @@ unsigned long totalMilliLitres;
 unsigned long oldTime;
 float calibrationFactor = 4.5;
 
+//WIFI
+WiFiClient wifiClient;
+PubSubClient client(wifiClient);
+
 void setup() {
 
   Serial.begin(9600);
   pinMode(LED_PIN, OUTPUT);
   pinMode(FLUX_PIN, INPUT_PULLUP);
   pinMode(VALVE_PIN, OUTPUT);
+  pinMode(LED_BUILTIN, OUTPUT);
+
+  while (!Serial);
+
+  //WIFI
+  connectToWiFi();
+  setupMQTT(client);
 
   //RFID
   SPI.begin(); // Inizializza SPI
@@ -76,89 +96,102 @@ void setup() {
 }
 
 void loop() {
-  if (!isPouring) {
-    // Reset del ciclo quando nessuna scheda è inserita nel lettore
-    if (!mfrc522.PICC_IsNewCardPresent()) {
-      return;
-    }
 
-    if (!mfrc522.PICC_ReadCardSerial()) {
-      return;
-    }
+  // WIFI COMMUNICATION
+  if (WiFi.status() != WL_CONNECTED) {
+    reconnectToWiFi();
+    reconnectMQTT(client);
 
-    // Visualizza l'UID sulla porta seriale di Arduino IDE
-    MFRC522::PICC_Type PICC_Type = mfrc522.PICC_GetType(mfrc522.uid.sak);
-    if (PICC_Type != MFRC522::PICC_TYPE_MIFARE_UL) {
-      Serial.println("Questo tipo di tag non è supportato!");
-      mfrc522.PICC_HaltA();
-      return;
-    }
+  } else if (!client.connected()) {
+    reconnectMQTT(client);
 
-    // Legge i blocchi del tag
-    char tokenID[] = {'e','e','e','e'};
-    for (byte block = 0; block < 5; block++) { // Legge solo i primi 4 blocchi
-      byte buffer[18];
-      byte size = sizeof(buffer);
-      MFRC522::StatusCode status = mfrc522.MIFARE_Read(block, buffer, &size);
+  } else {
+    client.loop();
 
-      if (status == MFRC522::STATUS_OK) {
-        String data = "";
-        for (byte i = 0; i < 18; i++) {
-          // Costruisce una stringa con i caratteri leggibili
-          if (isPrintable(buffer[i])) {
-            data += (char)buffer[i];
-          }
-        }
+    if (!isPouring) {
+      // Reset del ciclo quando nessuna scheda è inserita nel lettore
+      if (!mfrc522.PICC_IsNewCardPresent()) {
+        return;
+      }
 
-        int index = data.indexOf("en");
-        if (index >= 0 && index + 2 < data.length()) {
+      if (!mfrc522.PICC_ReadCardSerial()) {
+        return;
+      }
 
-          for (int i = index+2 ; i< index+2+4; ++i){
-            char potentialDigit = data.charAt(i); 
-            tokenID[i-(index+2)] = potentialDigit;
+      // Visualizza l'UID sulla porta seriale di Arduino IDE
+      MFRC522::PICC_Type PICC_Type = mfrc522.PICC_GetType(mfrc522.uid.sak);
+      if (PICC_Type != MFRC522::PICC_TYPE_MIFARE_UL) {
+        Serial.println("Questo tipo di tag non è supportato!");
+        mfrc522.PICC_HaltA();
+        return;
+      }
 
-            if (isDigit(potentialDigit)) { 
-              tokenID[i-(index+2)] = potentialDigit;
+      // Legge i blocchi del tag
+      char tokenID[] = {'e','e','e','e'};
+      for (byte block = 0; block < 5; block++) { // Legge solo i primi 4 blocchi
+        byte buffer[18];
+        byte size = sizeof(buffer);
+        MFRC522::StatusCode status = mfrc522.MIFARE_Read(block, buffer, &size);
+
+        if (status == MFRC522::STATUS_OK) {
+          String data = "";
+          for (byte i = 0; i < 18; i++) {
+            // Costruisce una stringa con i caratteri leggibili
+            if (isPrintable(buffer[i])) {
+              data += (char)buffer[i];
             }
           }
 
+          int index = data.indexOf("en");
+          if (index >= 0 && index + 2 < data.length()) {
+
+            for (int i = index+2 ; i< index+2+4; ++i){
+              char potentialDigit = data.charAt(i); 
+              tokenID[i-(index+2)] = potentialDigit;
+
+              if (isDigit(potentialDigit)) { 
+                tokenID[i-(index+2)] = potentialDigit;
+              }
+            }
+
+          }
         }
       }
+    
+      bool existsUID = true;  // = CompareUID(mfrc522.uid.uidByte, mfrc522.uid.size);
+      if (existsUID) {
+        digitalWrite(LED_PIN, HIGH);
+        digitalWrite(VALVE_PIN, HIGH);
+        Serial.println("VALVE ACTIVATED");
+
+        isPouring = true;
+      }
+
+      mfrc522.PICC_HaltA(); // Ferma la comunicazione con la carta
+
+      // Stampa solo la cifra trovata, se esiste
+      for(int i = 0; i<4; i++){
+        Serial.print(tokenID[i]);
+        Serial.print(" - ");
+      }
+      Serial.println();
+
     }
-   
-    bool existsUID = true;  // = CompareUID(mfrc522.uid.uidByte, mfrc522.uid.size);
-    if (existsUID) {
-      digitalWrite(LED_PIN, HIGH);
-      digitalWrite(VALVE_PIN, HIGH);
-      Serial.println("VALVE ACTIVATED");
 
-      isPouring = true;
+    if (isPouring) {
+      PouringRoutine();
     }
 
-    mfrc522.PICC_HaltA(); // Ferma la comunicazione con la carta
-
-    // Stampa solo la cifra trovata, se esiste
-    for(int i = 0; i<4; i++){
-      Serial.print(tokenID[i]);
-      Serial.print(" - ");
+    if (pouringEnded) {
+      Serial.println("VALVE CLOSED");
+      digitalWrite(LED_PIN, LOW);
+      digitalWrite(VALVE_PIN, LOW);
+      isPouring = false;
     }
-    Serial.println();
 
+    // TEMPERATURE AND HUMIDITY
+    ReadTemperature();
   }
-
-  if (isPouring) {
-    PouringRoutine();
-  }
-
-  if (pouringEnded) {
-    Serial.println("VALVE CLOSED");
-    digitalWrite(LED_PIN, LOW);
-    digitalWrite(VALVE_PIN, LOW);
-    isPouring = false;
-  }
-
-  // TEMPERATURE AND HUMIDITY
-  ReadTemperature();
 }
 
 
@@ -174,6 +207,7 @@ void ReadTemperature(){
     Serial.print("Temperature  (C): ");
     Serial.println((float)DHT11.temperature, 2);
 
+    publishValues(client, TOPIC_LEVEL, String(DHT11.temperature));
     // We should send the temperature to the cloud?
   }
 }
