@@ -38,7 +38,7 @@ void reconnectMQTT(PubSubClient& client) {
         if (client.connect(ARDUINO_ID, BROKER_USER, BROKER_PASSWORD)) {
             Serial.println("Reconnected to MQTT broker");
         } else {
-            Serial.print("Failed, rc=");
+            Serial.print("Connection to MQTT Failed, rc=");
             Serial.print(client.state());
             Serial.println(" try again in 5 seconds");
             delay(5000);

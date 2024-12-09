@@ -7,7 +7,7 @@ void connectToWiFi();
 void reconnectToWiFi();
 void setupMQTT(PubSubClient& client);
 void reconnectMQTT(PubSubClient& client);
-void publishValues(PubSubClient& client, const char* topic,String date, const String& value);
+void publishValues(PubSubClient& client, const char* topic, const String& value);
 
 
 #endif

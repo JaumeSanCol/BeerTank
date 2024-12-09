@@ -15,12 +15,10 @@ extern const char* ARDUINO_ID;
 // Topics MQTT
 extern const char* TOPIC_TEMP;
 extern const char* TOPIC_LEVEL;
+
 // API endpoint
 extern const char* server ; 
 extern const int httpsPort ; 
 
-// Login credentials
-extern const char* username ;
-extern const char* userPassword ;
 
 #endif

@@ -19,7 +19,5 @@ const char* TOPIC_LEVEL = "water-level";
 // API endpoint
 const char* server = "sci-cloudapp.onrender.com"; 
 const int httpsPort = 443; 
-const char* username = "Your_Username";
-const char* userPassword = "Your_Password";
 
 

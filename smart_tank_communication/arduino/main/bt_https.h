@@ -3,8 +3,6 @@
 
 #include <WiFiClientSecure.h>
 
-void loginToCloud();
-void validateToken(int tokenId);
-
+void validateToken(WiFiClientSecure& httpsclient,int tokenId);
 
 #endif
