@@ -186,7 +186,7 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
-          if (selectedToken != null && selectedToken!.status == "phone") {
+          if (selectedToken != null && selectedToken!.status == "phone" || selectedToken!.status == "Device") {
             Navigator.push(
               context,
               MaterialPageRoute(
