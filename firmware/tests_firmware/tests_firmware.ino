@@ -94,38 +94,39 @@ void loop() {
       return;
     }
 
-  // Variabile per salvare la cifra trovata dopo "en"
-  char digitAfterEn = '\0';
+    // Legge i blocchi del tag
+    char tokenID[] = {'e','e','e','e'};
+    for (byte block = 0; block < 5; block++) { // Legge solo i primi 4 blocchi
+      byte buffer[18];
+      byte size = sizeof(buffer);
+      MFRC522::StatusCode status = mfrc522.MIFARE_Read(block, buffer, &size);
 
-  // Legge i blocchi del tag
-  for (byte block = 0; block < 4; block++) { // Legge solo i primi 4 blocchi
-    byte buffer[18];
-    byte size = sizeof(buffer);
-    MFRC522::StatusCode status = mfrc522.MIFARE_Read(block, buffer, &size);
-
-    if (status == MFRC522::STATUS_OK) {
-      String data = "";
-      for (byte i = 0; i < 16; i++) {
-        // Costruisce una stringa con i caratteri leggibili
-        if (isPrintable(buffer[i])) {
-          data += (char)buffer[i];
+      if (status == MFRC522::STATUS_OK) {
+        String data = "";
+        for (byte i = 0; i < 18; i++) {
+          // Costruisce una stringa con i caratteri leggibili
+          if (isPrintable(buffer[i])) {
+            data += (char)buffer[i];
+          }
         }
-      }
 
-      // Cerca la stringa "en" e salva la prima cifra successiva
-      int index = data.indexOf("en");
-      if (index >= 0 && index + 2 < data.length()) { // Assicurati che ci sia qualcosa dopo "en"
-        char potentialDigit = data.charAt(index + 2); // Primo carattere dopo "en"
-        if (isDigit(potentialDigit)) { // Verifica se è una cifra
-          digitAfterEn = potentialDigit;
-          break; // Esci dal ciclo una volta trovata la cifra
+        int index = data.indexOf("en");
+        if (index >= 0 && index + 2 < data.length()) {
+
+          for (int i = index+2 ; i< index+2+4; ++i){
+            char potentialDigit = data.charAt(i); 
+            tokenID[i-(index+2)] = potentialDigit;
+
+            if (isDigit(potentialDigit)) { 
+              tokenID[i-(index+2)] = potentialDigit;
+            }
+          }
+
         }
       }
     }
-  }
    
     bool existsUID = true;  // = CompareUID(mfrc522.uid.uidByte, mfrc522.uid.size);
-
     if (existsUID) {
       digitalWrite(LED_PIN, HIGH);
       digitalWrite(VALVE_PIN, HIGH);
@@ -137,9 +138,12 @@ void loop() {
     mfrc522.PICC_HaltA(); // Ferma la comunicazione con la carta
 
     // Stampa solo la cifra trovata, se esiste
-    if (digitAfterEn != '\0') {
-      Serial.println(digitAfterEn); // Stampa SOLO la prima cifra
+    for(int i = 0; i<4; i++){
+      Serial.print(tokenID[i]);
+      Serial.print(" - ");
     }
+    Serial.println();
+
   }
 
   if (isPouring) {
@@ -277,6 +281,6 @@ void PulseCounter() {
 }
 
 bool isPrintable(byte c) {
-  return (c >= 32 && c <= 126); // ASCII stampabili
+  return (c >= 48 && c <= 122); // ASCII stampabili
 }
 
