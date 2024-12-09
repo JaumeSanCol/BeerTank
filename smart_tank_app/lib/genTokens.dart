@@ -90,7 +90,8 @@ class _GenTokensPageState extends State<GenTokensPage> {
     // Find the establishment by name
     final selectedEstablishment = _establishments[_selectedEstablishment];
 
-    final establishmentID = _establishments[selectedEstablishment]?.id;
+    final establishmentID = selectedEstablishment?.id;
+    print('selected: $selectedEstablishment');
     print('establishmentID = $establishmentID');
     // Ensure Customer ID is not empty
     if (customerId.isEmpty) {
