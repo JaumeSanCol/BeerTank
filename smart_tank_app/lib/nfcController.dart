@@ -29,7 +29,7 @@ class NfcController {
     try{
       //Write token id to the NFC tag, in overwrite mode
       NdefMessage message = NdefMessage([
-        NdefRecord.createText(token.id.toString()),
+        NdefRecord.createText(token.id.toString().padLeft(4, '0')),
       ]);
 
       
