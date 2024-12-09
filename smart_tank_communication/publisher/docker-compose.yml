@@ -1,0 +1,5 @@
+services:
+  publisher:
+    build: ./app
+    container_name: publisher
+    restart: unless-stopped

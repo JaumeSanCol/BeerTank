@@ -1,0 +1,6 @@
+services:
+  subscriber:
+    build: ./app
+    container_name: subscriber
+    network_mode: "host"
+    restart: unless-stopped
