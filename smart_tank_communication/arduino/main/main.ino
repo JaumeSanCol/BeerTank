@@ -30,11 +30,12 @@ void loop() {
   } else {
     client.loop();
 
-    float x = static_cast<float>(rand() % 100);
+    // float x = static_cast<float>(rand() % 100);
 
-    // PUBLISH VALUES
-    publishValues(client, TOPIC_LEVEL, String(x));
+    // // PUBLISH VALUES
+    // publishValues(client, TOPIC_LEVEL, String(x));
 
-    // validateToken(httpsclient, 1);
+    int result= validateToken(httpsclient, 1);
+    Serial.println(result);
   }
 }
