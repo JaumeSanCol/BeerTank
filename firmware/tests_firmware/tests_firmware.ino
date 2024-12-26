@@ -91,8 +91,9 @@ void setup() {
   digitalWrite(VALVE_PIN, LOW);
   digitalWrite(LED_PIN, LOW);
 
-
   attachInterrupt(digitalPinToInterrupt(FLUX_PIN), PulseCounter, FALLING);
+
+  Serial.println("Setup done!");
 }
 
 void loop() {
@@ -113,10 +114,14 @@ void loop() {
   //client.loop();
 
   if (!isPouring) {
+
+    //Serial.println("Waiting card...");
+    
     // Reset del ciclo quando nessuna scheda è inserita nel lettore
     if (!mfrc522.PICC_IsNewCardPresent()) {
       return;
     }
+    Serial.println("quii");
 
     if (!mfrc522.PICC_ReadCardSerial()) {
       return;
@@ -124,11 +129,13 @@ void loop() {
 
     // Visualizza l'UID sulla porta seriale di Arduino IDE
     MFRC522::PICC_Type PICC_Type = mfrc522.PICC_GetType(mfrc522.uid.sak);
+    /*
     if (PICC_Type != MFRC522::PICC_TYPE_MIFARE_UL) {
       Serial.println("Questo tipo di tag non è supportato!");
       mfrc522.PICC_HaltA();
       return;
     }
+    */
 
     // Legge i blocchi del tag
     char tokenID[] = {'e','e','e','e'};
@@ -182,19 +189,19 @@ void loop() {
 
   }
 
-    if (isPouring) {
-      PouringRoutine();
-    }
+  if (isPouring) {
+    PouringRoutine();
+  }
 
-    if (pouringEnded) {
-      Serial.println("VALVE CLOSED");
-      digitalWrite(LED_PIN, LOW);
-      digitalWrite(VALVE_PIN, LOW);
-      isPouring = false;
-    }
+  if (pouringEnded) {
+    Serial.println("VALVE CLOSED");
+    digitalWrite(LED_PIN, LOW);
+    digitalWrite(VALVE_PIN, LOW);
+    isPouring = false;
+  }
 
-    // TEMPERATURE AND HUMIDITY
-    ReadTemperature();
+  // TEMPERATURE AND HUMIDITY
+  ReadTemperature();
 }
 
 
