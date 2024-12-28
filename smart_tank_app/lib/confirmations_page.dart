@@ -98,7 +98,7 @@ class _ConfirmationsPageState extends State<ConfirmationsPage> {
                     children: confirmationEntries.map((confirmation) {
                       return Card(
                         child: ListTile(
-                          title: Text('Confirmation ID: ${confirmation.token}'),
+                          title: Text('Token: ${confirmation.token}'),
                           subtitle: Text('Establishment: ${confirmation.establishmentName} at ${confirmation.usedAt}'),
                           onTap: () {
                             setState(() {
