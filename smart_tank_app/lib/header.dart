@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:smart_tank_app/api_service.dart';
+import 'confirmations_page.dart';
 import 'login_page.dart';
 import 'main.dart';
 import 'genTokens.dart';
@@ -71,6 +72,16 @@ class HeaderDrawer extends StatelessWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => const GenTokensPage()),
+              );
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.check),
+            title: const Text('Confirmations'),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const ConfirmationsPage()),
               );
             },
           ),
