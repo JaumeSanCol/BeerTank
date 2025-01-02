@@ -2,7 +2,6 @@
 #include "config.h"
 #include <WiFi.h>
 #include <PubSubClient.h>
-#include <RTClib.h>
 
 void connectToWiFi() {
     WiFi.begin(ssid, pass);

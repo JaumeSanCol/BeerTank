@@ -3,6 +3,6 @@
 
 #include <WiFiClientSecure.h>
 
-void validateToken(WiFiClientSecure& httpsclient,int tokenId);
+int validateToken(WiFiClientSecure& httpsclient,int tokenId);
 
 #endif
