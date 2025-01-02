@@ -3,8 +3,9 @@
 import 'package:flutter/material.dart';
 import 'package:smart_tank_app/dialog_utils.dart';
 import 'dart:convert';
-import 'api_service.dart';  // Import the ApiService
+import 'api_service.dart';
 import 'main.dart';
+import 'register_page.dart'; // Import RegisterPage
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -38,8 +39,9 @@ class _LoginPageState extends State<LoginPage> {
         final data = jsonDecode(response.body);
         final accessToken = data['accessToken'];
         final refreshToken = data['refreshToken'];
+        final userId = data['UserId'];
         // Save the token to memory or a secure storage option
-        ApiService.setTokens(accessToken, refreshToken);
+        ApiService.setTokens(accessToken, refreshToken, userId);
 
         // Navigate to the home page
         Navigator.pushReplacement(
@@ -83,7 +85,7 @@ class _LoginPageState extends State<LoginPage> {
                 decoration: const InputDecoration(
                   labelText: 'Username',
                   border: OutlineInputBorder(),
-                )
+                ),
               ),
               const SizedBox(height: 20), // Space between fields
               TextField(
@@ -94,10 +96,21 @@ class _LoginPageState extends State<LoginPage> {
                 ),
                 obscureText: true,
               ),
-              const SizedBox(height: 40), // Space before the button
+              const SizedBox(height: 40), // Space before the buttons
               ElevatedButton(
-                onPressed: login, // Trigger login without BuildContext
+                onPressed: login, // Trigger login
                 child: const Text('Log In'),
+              ),
+              const SizedBox(height: 10), // Space between buttons
+              TextButton(
+                onPressed: () {
+                  // Navigate to the Register Page
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const RegisterPage()),
+                  );
+                },
+                child: const Text('Register'),
               ),
             ],
           ),

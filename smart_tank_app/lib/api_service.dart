@@ -13,6 +13,7 @@ class ApiService {
   // Variable to hold the JWT token
   static String? _jwtToken;
   static String? _refreshToken;
+  static int? _userId;
   // Function to load configuration from the JSON file (base_url)
   static Future<void> loadConfig() async {
     try {
@@ -100,9 +101,10 @@ class ApiService {
     return response;
   }
 
-  static void setTokens(accessToken, refreshToken) {
+  static void setTokens(accessToken, refreshToken, userId) {
     _setJwtToken(accessToken);
     _setRefreshToken(refreshToken);
+    _userId = userId;
   }
 
   static Future<void> refreshToken(context) async {
@@ -137,5 +139,10 @@ class ApiService {
   static void logout() {
     _jwtToken = '';
     _refreshToken = '';
+    _userId = 0;
+  }
+
+  static int? getUserId() {
+    return _userId;
   }
 }
