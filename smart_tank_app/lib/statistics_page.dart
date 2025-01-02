@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:intl/intl.dart';
 import 'package:smart_tank_app/header.dart';
 import 'package:smart_tank_app/tanks_list.dart';
 
@@ -23,17 +24,15 @@ class StatisticsPage extends StatefulWidget {
 class _StatisticsPageState extends State<StatisticsPage> {
   late StreamSubscription _mqttSubscription;
   late StreamController<Map<String, dynamic>> _statsController;
-  late Timer _mockTimer;
   late Tank tank;
+
+  bool _isLoading = true;
 
   late double temperature;
   late double level;
 
-
-  final List<FlSpot> temperatureData = [
-    FlSpot(0, 0),
-  ];
-
+  final List<FlSpot> temperatureData = [];
+  final List<FlSpot> levelData = [];
   final int maxDataPoints = 10;
   int elapsedTime = 0;
 
@@ -43,72 +42,80 @@ class _StatisticsPageState extends State<StatisticsPage> {
 
     _statsController = StreamController<Map<String, dynamic>>();
 
-    _mockTimer = Timer.periodic(const Duration(seconds: 2), (timer) {
-      var v = temperatureData.last.y < 0 ? temperatureData.last.y : temperatureData.last.y -1;
-      final newTemperature = -v + 1;
-
-      setState(() {
-        elapsedTime += 2;
-        temperatureData.add(FlSpot(elapsedTime.toDouble(), newTemperature.toDouble()));
-
-        if (temperatureData.length > maxDataPoints) {
-          temperatureData.removeAt(0);
-        }
-      });
-    });
-
     tank = widget.tank;
-
     temperature = tank.temp;
     level = tank.level;
 
+    // Listen for MQTT messages
     _mqttSubscription = widget.mqttService.messageStream.listen((message) {
       final String messageTankId = message['tankId'] ?? '';
       final String messageValue = message['value'] ?? '';
       final String messageTopic = message['topic'] ?? '';
 
-      // Check if the message is for this tank
       if (messageTankId == tank.id.toString()) {
         final double parsedValue = double.tryParse(messageValue) ?? 0.0;
         setState(() {
-          // Update stats based on topic
           if (messageTopic == 'temperature') {
             temperature = parsedValue;
           } else if (messageTopic == 'water-level') {
             level = parsedValue;
           }
         });
-
-        /*// Update the temperature graph if it's a temperature topic
-        if (messageTopic == 'temperature') {
-          setState(() {
-            elapsedTime += 2;
-            temperatureData.add(FlSpot(elapsedTime.toDouble(), temperature));
-
-            if (temperatureData.length > maxDataPoints) {
-              temperatureData.removeAt(0);
-            }
-          });
-        }*/
       }
     });
 
-    _fetchTankLevelHistory(tank);
+    _fetchData();
   }
 
   @override
   void dispose() {
-    _mockTimer.cancel();
+    _mqttSubscription.cancel();
+    _statsController.close();
     super.dispose();
   }
 
-  void _fetchTankLevelHistory(Tank tank) async {
+  Future<void> _fetchData() async {
+    const tempString = 'temperature';
+    const levelString = 'level';
+
+    // Begin loading
+    setState(() {
+      _isLoading = true;
+    });
+
+    // fetch temperature values to FlSpots
+    final temperatureValues = await _fetchTankLevelHistory(tempString, tank);
+    final temperatureSpots = _parseDataToFlSpotTimestamp(tempString, temperatureValues);
+    temperatureSpots.sort((a, b) => a.x.compareTo(b.x));
+
+    // fetch level values to FlSpots
+    final levelValues = await _fetchTankLevelHistory(levelString, tank);
+    final levelSpots = _parseDataToFlSpotTimestamp(levelString, levelValues);
+    levelSpots.sort((a, b) => a.x.compareTo(b.x));
+
+    setState(() {
+      temperatureData.addAll(temperatureSpots);
+      if (temperatureData.length > 20) {
+        temperatureData.removeRange(0, temperatureData.length - 20);
+      }
+      levelData.addAll(levelSpots);
+      if (levelData.length > 20) {
+        levelData.removeRange(0, levelData.length - 20);
+      }
+      // Data is loaded now
+      _isLoading = false;
+    });
+  }
+
+  Future<List> _fetchTankLevelHistory(String dataString, Tank tank) async {
     try {
-      final establishmentResponse = await ApiService.getRequest('/statistics/tank/${tank.id}/level/history', requiresAuth: true);
+      final establishmentResponse = await ApiService.getRequest(
+          '/statistics/tank/${tank.id}/$dataString/history',
+          requiresAuth: true
+      );
       if (establishmentResponse.statusCode == 200) {
         final List<dynamic> responseData = jsonDecode(establishmentResponse.body);
-        print("\n\nprinting response DATA:\n");
-        print(responseData);
+        return responseData;
       } else {
         showErrorDialog(context, 'Failed to fetch tank level statistics history');
       }
@@ -116,13 +123,25 @@ class _StatisticsPageState extends State<StatisticsPage> {
       showErrorDialog(context, 'An error occurred while fetching tank level statistics history');
       print(e);
     }
+    return List.empty();
+  }
+
+  List<FlSpot> _parseDataToFlSpotTimestamp(String dataString, List<dynamic> data) {
+    return data.map((entry) {
+      final date = DateTime.parse(entry['datetime'] as String);
+      final xValue = date.millisecondsSinceEpoch.toDouble();
+      final yValue = (entry[dataString] as num).toDouble();
+      return FlSpot(xValue, yValue);
+    }).toList();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: Header(title: 'Statistics Page'),
-      body: Padding(
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -151,63 +170,74 @@ class _StatisticsPageState extends State<StatisticsPage> {
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 10),
+
+            // Only build the chart if we have data
             Expanded(
-              child: LineChart(
+              child: temperatureData.isEmpty
+                  ? const Center(child: Text('No data available'))
+                  : LineChart(
                 LineChartData(
-                    gridData: FlGridData(show: true),
-                    titlesData: FlTitlesData(
-                      leftTitles: SideTitles(
-                        showTitles: true,
-                        getTextStyles: (value) => const TextStyle(
-                          color: Colors.white,
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      bottomTitles: SideTitles(
-                        showTitles: true,
-                        getTextStyles: (value) => const TextStyle(
-                          color: Colors.white,
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        getTitles: (value) => '${value.toInt()}s',
-                        reservedSize: 22,
+                  gridData: FlGridData(show: true),
+                  titlesData: FlTitlesData(
+                    leftTitles: SideTitles(
+                      showTitles: true,
+                      getTextStyles: (value) => const TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                    borderData: FlBorderData(
-                      show: true,
-                      border: const Border(
-                        left: BorderSide(),
-                        bottom: BorderSide(),
+                    bottomTitles: SideTitles(
+                      showTitles: true,
+                      checkToShowTitle: (minValue, maxValue, sideTitles, appliedInterval, value) {
+                        return temperatureData.any((spot) => spot.x == value);
+                      },
+                      reservedSize: 40,
+                      interval: 3600000 * 4, // 3600000 ms = 1 hour
+                      getTextStyles: (value) => const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
                       ),
+                      getTitles: (double value) {
+                        final date = DateTime.fromMillisecondsSinceEpoch(value.toInt());
+                        return DateFormat('HH:mm').format(date);
+                      },
                     ),
-                    lineBarsData: [
-                      LineChartBarData(
-                        isCurved: true,
-                        colors: [Colors.amberAccent],
-                        barWidth: 4,
-                        dotData: FlDotData(show: false),
-                        spots: temperatureData,
-                      ),
-                    ],
-                    minY: 0,
-                    maxY: 15,
-                    lineTouchData: LineTouchData(
-                        touchTooltipData: LineTouchTooltipData(
-                            getTooltipItems: (List<LineBarSpot> touchedSpots) {
-                              return touchedSpots.map((LineBarSpot spot) {
-                                return LineTooltipItem(
-                                    'Temp: ${spot.y.toStringAsFixed(1)}s\nTime: ${spot.x.toInt()}s',
-                                    TextStyle(
-                                      color: Colors.black,
-                                      fontWeight: FontWeight.bold,
-                                    )
-                                );
-                              }).toList();
-                            }
-                        )
-                    )
+                  ),
+                  borderData: FlBorderData(
+                    show: true,
+                    border: const Border(
+                      left: BorderSide(),
+                      bottom: BorderSide(),
+                    ),
+                  ),
+                  lineBarsData: [
+                    LineChartBarData(
+                      isCurved: false,
+                      colors: [Colors.amberAccent],
+                      barWidth: 4,
+                      dotData: FlDotData(show: false),
+                      spots: temperatureData,
+                    ),
+                  ],
+                  minY: 0,
+                  maxY: 5,
+                  lineTouchData: LineTouchData(
+                    touchTooltipData: LineTouchTooltipData(
+                      getTooltipItems: (List<LineBarSpot> touchedSpots) {
+                        return touchedSpots.map((LineBarSpot spot) {
+                          return LineTooltipItem(
+                            'Temp: ${spot.y.toStringAsFixed(1)}ºC\nTime: ${DateFormat("HH:mm").format(DateTime.fromMillisecondsSinceEpoch(spot.x.toInt()))}',
+                            const TextStyle(
+                              color: Colors.black,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          );
+                        }).toList();
+                      },
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -217,65 +247,74 @@ class _StatisticsPageState extends State<StatisticsPage> {
             ),
             const SizedBox(height: 10),
             Expanded(
-              child: LineChart(
+              child: levelData.isEmpty
+                  ? const Center(child: Text('No data available'))
+                  : LineChart(
                 LineChartData(
-                    gridData: FlGridData(show: true),
-                    titlesData: FlTitlesData(
-                      leftTitles: SideTitles(
-                        showTitles: true,
-                        getTextStyles: (value) => const TextStyle(
-                          color: Colors.white,
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      bottomTitles: SideTitles(
-                        showTitles: true,
-                        getTextStyles: (value) => const TextStyle(
-                          color: Colors.white,
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        getTitles: (value) => '${value.toInt()}s',
-                        reservedSize: 22,
+                  gridData: FlGridData(show: true),
+                  titlesData: FlTitlesData(
+                    leftTitles: SideTitles(
+                      showTitles: true,
+                      getTextStyles: (value) => const TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                    borderData: FlBorderData(
-                      show: true,
-                      border: const Border(
-                        left: BorderSide(),
-                        bottom: BorderSide(),
+                    bottomTitles: SideTitles(
+                      showTitles: true,
+                      checkToShowTitle: (minValue, maxValue, sideTitles, appliedInterval, value) {
+                        return levelData.any((spot) => spot.x == value);
+                      },
+                      reservedSize: 40,
+                      interval: 3600000 * 4, // 3600000 ms = 1 hour
+                      getTextStyles: (value) => const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
                       ),
+                      getTitles: (double value) {
+                        final date = DateTime.fromMillisecondsSinceEpoch(value.toInt());
+                        return DateFormat('HH:mm').format(date);
+                      },
                     ),
-                    lineBarsData: [
-                      LineChartBarData(
-                        isCurved: true,
-                        colors: [Colors.amberAccent],
-                        barWidth: 4,
-                        dotData: FlDotData(show: false),
-                        spots: temperatureData,
-                      ),
-                    ],
-                    minY: 0,
-                    maxY: 5,
-                    lineTouchData: LineTouchData(
-                        touchTooltipData: LineTouchTooltipData(
-                            getTooltipItems: (List<LineBarSpot> touchedSpots) {
-                              return touchedSpots.map((LineBarSpot spot) {
-                                return LineTooltipItem(
-                                    'Level: ${spot.y.toStringAsFixed(1)}l\nTime: ${spot.x.toInt()}s',
-                                    TextStyle(
-                                      color: Colors.black,
-                                      fontWeight: FontWeight.bold,
-                                    )
-                                );
-                              }).toList();
-                            }
-                        )
-                    )
+                  ),
+                  borderData: FlBorderData(
+                    show: true,
+                    border: const Border(
+                      left: BorderSide(),
+                      bottom: BorderSide(),
+                    ),
+                  ),
+                  lineBarsData: [
+                    LineChartBarData(
+                      isCurved: false,
+                      colors: [Colors.amberAccent],
+                      barWidth: 4,
+                      dotData: FlDotData(show: false),
+                      spots: levelData,
+                    ),
+                  ],
+                  minY: 0,
+                  maxY: 3,
+                  lineTouchData: LineTouchData(
+                    touchTooltipData: LineTouchTooltipData(
+                      getTooltipItems: (List<LineBarSpot> touchedSpots) {
+                        return touchedSpots.map((LineBarSpot spot) {
+                          return LineTooltipItem(
+                            'Level: ${spot.y.toStringAsFixed(1)}L\nTime: ${DateFormat("HH:mm").format(DateTime.fromMillisecondsSinceEpoch(spot.x.toInt()))}',
+                            const TextStyle(
+                              color: Colors.black,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          );
+                        }).toList();
+                      },
+                    ),
+                  ),
                 ),
               ),
-            )
+            ),
           ],
         ),
       ),
