@@ -122,7 +122,7 @@ class _EstablishmentsPageState extends State<EstablishmentsPage> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => EstablishmentsPage(
+                        builder: (context) => EstablishmentPage(
                           establishment: establishment,
                           mqttService: mqttService,
                         ),

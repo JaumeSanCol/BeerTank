@@ -10,17 +10,17 @@ import 'header.dart';
 import 'mqtt_service.dart';
 import 'api_service.dart';
 
-class EstablishmentsPage extends StatefulWidget {
+class EstablishmentPage extends StatefulWidget {
   final Establishment establishment;
   final MqttService mqttService;
 
-  const EstablishmentsPage({super.key, required this.establishment, required this.mqttService});
+  const EstablishmentPage({super.key, required this.establishment, required this.mqttService});
 
   @override
-  State<EstablishmentsPage> createState() => _EstablishmentsPageState();
+  State<EstablishmentPage> createState() => _EstablishmentPageState();
 }
 
-class _EstablishmentsPageState extends State<EstablishmentsPage> {
+class _EstablishmentPageState extends State<EstablishmentPage> {
   late Future<List<Tank>> futureTanks;
   int? totalBeersServed;
   int? tanksCounter;

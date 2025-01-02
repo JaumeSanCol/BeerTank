@@ -1,9 +1,12 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:smart_tank_app/header.dart';
 import 'package:smart_tank_app/tanks_list.dart';
 
+import 'api_service.dart';
+import 'dialog_utils.dart';
 import 'mqtt_service.dart';
 
 class StatisticsPage extends StatefulWidget {
@@ -89,12 +92,30 @@ class _StatisticsPageState extends State<StatisticsPage> {
         }*/
       }
     });
+
+    _fetchTankLevelHistory(tank);
   }
 
   @override
   void dispose() {
     _mockTimer.cancel();
     super.dispose();
+  }
+
+  void _fetchTankLevelHistory(Tank tank) async {
+    try {
+      final establishmentResponse = await ApiService.getRequest('/statistics/tank/${tank.id}/level/history', requiresAuth: true);
+      if (establishmentResponse.statusCode == 200) {
+        final List<dynamic> responseData = jsonDecode(establishmentResponse.body);
+        print("\n\nprinting response DATA:\n");
+        print(responseData);
+      } else {
+        showErrorDialog(context, 'Failed to fetch tank level statistics history');
+      }
+    } catch (e) {
+      showErrorDialog(context, 'An error occurred while fetching tank level statistics history');
+      print(e);
+    }
   }
 
   @override
