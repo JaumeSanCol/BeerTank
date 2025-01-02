@@ -1,3 +1,5 @@
+#pragma once
+
 #include "bt_mqtt.h"
 #include "config.h"
 #include <WiFi.h>

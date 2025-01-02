@@ -1,16 +1,17 @@
-#include "SPI.h"
-#include "MFRC522.h"
-#include "Vector.h"
-
-#include "bt_mqtt.h"
-
-#include "config.h"
-#include "Arduino.h"
+#pragma once
 
 #include <WiFi.h>
 #include <PubSubClient.h>
 #include <dht11.h>
 #include <string.h>
+#include "SPI.h"
+#include "MFRC522.h"
+#include "Vector.h"
+#include "bt_mqtt.h"
+#include "bt_https.h"
+#include "config.h"
+#include "Arduino.h"
+
 
 
 #define RST_PIN 9  // RES pin
@@ -47,6 +48,7 @@ float calibrationFactor = 4.5;
 //WIFI
 WiFiClient wifiClient;
 PubSubClient client(wifiClient);
+WiFiClientSecure httpsclient;
 
 void setup() {
 
@@ -59,8 +61,8 @@ void setup() {
   while (!Serial);
 
   //WIFI
-  //connectToWiFi();
-  //setupMQTT(client);
+  connectToWiFi();
+  setupMQTT(client);
 
   //RFID
   SPI.begin(); // Inizializza SPI
@@ -98,8 +100,8 @@ void setup() {
 
 void loop() {
 
-  /*
   // WIFI COMMUNICATION
+  /*
   if (WiFi.status() != WL_CONNECTED) {
     reconnectToWiFi();
     reconnectMQTT(client);
@@ -110,18 +112,19 @@ void loop() {
     return;
   }
   */
+  
+  client.loop();
 
-  //client.loop();
+  // TEMPERATURE AND HUMIDITY
+
+  //ReadTemperature();
 
   if (!isPouring) {
-
-    //Serial.println("Waiting card...");
     
     // Reset del ciclo quando nessuna scheda è inserita nel lettore
     if (!mfrc522.PICC_IsNewCardPresent()) {
       return;
     }
-    Serial.println("quii");
 
     if (!mfrc522.PICC_ReadCardSerial()) {
       return;
@@ -178,6 +181,9 @@ void loop() {
       isPouring = true;
     }
 
+    int result = validateToken(httpsclient, 1);
+    Serial.println(result);
+
     mfrc522.PICC_HaltA(); // Ferma la comunicazione con la carta
 
     // Stampa solo la cifra trovata, se esiste
@@ -200,8 +206,6 @@ void loop() {
     isPouring = false;
   }
 
-  // TEMPERATURE AND HUMIDITY
-  ReadTemperature();
 }
 
 
