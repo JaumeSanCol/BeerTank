@@ -1,6 +1,7 @@
 // File: header.dart
 
 import 'package:flutter/material.dart';
+import 'package:smart_tank_app/establishments_page.dart';
 import 'package:smart_tank_app/api_service.dart';
 import 'login_page.dart';
 import 'main.dart';
@@ -72,6 +73,23 @@ class HeaderDrawer extends StatelessWidget {
                 context,
                 MaterialPageRoute(builder: (context) => const GenTokensPage()),
               );
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.store), // Custom icon for token generation
+            title: const Text('Establishments'),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const EstablishmentsPage()),
+              );
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.info),
+            title: const Text('About'),
+            onTap: () {
+              // Navigate to About Page
             },
           ),
           const Divider(),
