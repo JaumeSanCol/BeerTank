@@ -2,7 +2,7 @@
     <uses-permission android:name="android.permission.NFC"/>
     <application
         android:label="smart_tank_app"
-        android:name="${SmartTank}"
+        android:name="SmartTank"
         android:icon="@mipmap/ic_launcher">
         <activity
             android:name=".MainActivity"
