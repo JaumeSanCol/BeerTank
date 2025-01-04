@@ -28,8 +28,6 @@ class Token {
   }
 
   bool loadTokenToCup() {
-    //TODO: should connect to the server to update the status of the token
-
     if (status == 'cup'){
       throw Exception('Token is already loaded to a cup');
     }

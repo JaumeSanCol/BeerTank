@@ -28,37 +28,33 @@ class _ConfirmationsPageState extends State<ConfirmationsPage> {
   
 
   Future<void> _fetchConfirmations() async {
-    // try {
-    //   //TODO: Replace 'PLACEHOLDER' with the actual API endpoint
-    //   final response = await ApiService.getRequest('PLACEHOLDER', requiresAuth: true);
-    //   if (response.statusCode == 200) {
-    //     // Parse the response and set up the confirmations list
-    //     final List<dynamic> data = jsonDecode(response.body); // Assuming response data is in JSON list format
-    //     setState(() {
-    //       confirmationEntries = data.map((entry) => Confirmation.fromJson(entry)).toList();
-    //     });
-    //   } else {
-    //     showErrorDialog(context, 'Failed to load confirmations. Please try again.');
-    //   }
-    // } catch (e) {
-    //   showErrorDialog(context, 'An error occurred while loading confirmations.');
-    //   print(e);
-    // } finally {
-    //   setState(() {
-    //     isLoading = false;
-    //   });
-    // }
-    return Future.delayed(Duration(seconds: 1), () {
+    try {
+      final response = await ApiService.getRequest('/confirmations/${ApiService.getUserId()}', requiresAuth: true);
+      print("status code ${response.statusCode}");
+      if (response.statusCode == 200) {
+        // Parse the response and set up the confirmations list
+        final List<dynamic> data = jsonDecode(response.body); // Assuming response data is in JSON list format
+        print(data);
+        setState(() {
+          confirmationEntries = Confirmation.fromJsonList(data);
+        });
+      } else {
+        // ignore: use_build_context_synchronously
+        showErrorDialog(context, 'Failed to load confirmations');
+          setState(() {
+            confirmationEntries = [];
+          });
+      }
+    } catch (e) {
+      // ignore: use_build_context_synchronously
+      showErrorDialog(context, 'An error occurred while loading confirmations.');
+      print(e);
+    } finally {
       setState(() {
-        confirmationEntries = [
-          Confirmation(id:1, token: 1, userId: 1, establishmentName:"est1", usedAt:"03-02-2022"),
-          Confirmation(id:2, token: 2, userId: 1, establishmentName:"est1", usedAt:"03-02-2022"),
-          Confirmation(id:3, token: 3, userId: 1, establishmentName:"est1", usedAt:"03-02-2022"),
-          Confirmation(id:4, token: 4, userId: 1, establishmentName:"est1", usedAt:"03-02-2022"),
-        ];
         isLoading = false;
       });
-    });
+    }
+
   }
 
   @override
@@ -99,7 +95,7 @@ class _ConfirmationsPageState extends State<ConfirmationsPage> {
                       return Card(
                         child: ListTile(
                           title: Text('Token: ${confirmation.token}'),
-                          subtitle: Text('Establishment: ${confirmation.establishmentName} at ${confirmation.usedAt}'),
+                          subtitle: Text('Establishment: ${confirmation.establishmentName}\n${confirmation.createdAt}'),
                           onTap: () {
                             setState(() {
                               selectedConfirmation = confirmation;
@@ -117,27 +113,30 @@ class _ConfirmationsPageState extends State<ConfirmationsPage> {
                 },
               ),
               const SizedBox(height: 20),
-              Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red, // Set the button color to red
-                    foregroundColor: Colors.white, // Set the text color to white
+
+              confirmationEntries.isEmpty || selectedConfirmation == null
+                  ? const SizedBox()
+                  : Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red, // Set the button color to red
+                      foregroundColor: Colors.white, // Set the text color to white
+                    ),
+                    onPressed: () {
+                      handleLogic(context, false);
+                    },
+                    child: const Text('Cancel'),
                   ),
-                  onPressed: () {
-                    handleLogic(context, false);
-                  },
-                  child: const Text('Cancel'),
-                ),
-                ElevatedButton(
-                  onPressed: () {
-                    handleLogic(context, true);
-                  },
-                  child: const Text('Confirm'),
-                ),
-              ],
-            ),
+                  ElevatedButton(
+                    onPressed: () {
+                      handleLogic(context, true);
+                    },
+                    child: const Text('Confirm'),
+                  ),
+                ],
+              ),
             ],
           ),
         ),
@@ -154,69 +153,46 @@ class _ConfirmationsPageState extends State<ConfirmationsPage> {
     );
 
     print("isConfirm $isConfirm");
-    if (isConfirm) {
-      try {
-      //TODO: Send API request to confirm the selected confirmation
-        await ApiService.postRequest('PLACEHOLDER', {}, requiresAuth: true)
-          .then((response) {
-            if (response.statusCode == 200) {
-              // ignore: use_build_context_synchronously
-              Navigator.of(context).pop();
-              showDialog(
-                // ignore: use_build_context_synchronously
-                context: context,
-                builder: (context) {
-                  return successConfirmDialog(context);
-                }
-              );
-            } else {
-              print("failure in response");
-              // ignore: use_build_context_synchronously
-              Navigator.of(context).pop();
-              showDialog(
-                // ignore: use_build_context_synchronously
-                context: context,
-                builder: (context) {
-                  return failureDialog(context);
-                }
-              );
-            }
-          });
-      } catch (e) {
-        print("Error found");
+    try {
+      final response = await  ApiService.postRequest('/confirmations/confirm', {
+        'confirmationId': selectedConfirmation!.id,
+        'responseBinary': isConfirm ? 1 : 0
+      }, requiresAuth: true);
+      
+      print("status code ${response.statusCode}");
+      if (response.statusCode == 200) {
+        // ignore: use_build_context_synchronously
         Navigator.of(context).pop();
         showDialog(
+          // ignore: use_build_context_synchronously
+          context: context,
+          builder: (context) {
+            return isConfirm ? successConfirmDialog(context) : successCancelDialog(context);
+          }
+        );
+      } else {
+        print("failure in response");
+        // ignore: use_build_context_synchronously
+        Navigator.of(context).pop();
+        showDialog(
+          // ignore: use_build_context_synchronously
           context: context,
           builder: (context) {
             return failureDialog(context);
           }
         );
       }
-    } else {
-      //TODO: Send API request to cancel the selected confirmation
-      ApiService.postRequest('PLACEHOLDER', {}, requiresAuth: true).then((response) {
-        if (response.statusCode == 200) {
-          // ignore: use_build_context_synchronously
-          Navigator.of(context).pop();
-          showDialog(
-            // ignore: use_build_context_synchronously
-            context: context,
-            builder: (context) {
-              return successCancelDialog(context);
-            }
-          );
-        } else {
-          // ignore: use_build_context_synchronously
-          Navigator.of(context).pop();
-          showDialog(
-            // ignore: use_build_context_synchronously
-            context: context,
-            builder: (context) {
-              return failureDialog(context);
-            }
-          );
+    } catch (e) {
+      print("Error found");
+      // ignore: use_build_context_synchronously
+      Navigator.of(context).pop();
+      showDialog(
+        // ignore: use_build_context_synchronously
+        context: context,
+        builder: (context) {
+          return failureDialog(context);
         }
-      });
+      );
     }
   }
 
@@ -273,7 +249,7 @@ class _ConfirmationsPageState extends State<ConfirmationsPage> {
           const Icon(
             Icons.cancel,
             size: 50,
-            color: Colors.red,
+            color: Colors.green,
           ),
           const SizedBox(height: 20),
           const Text(
@@ -300,9 +276,9 @@ class _ConfirmationsPageState extends State<ConfirmationsPage> {
       mainAxisSize: MainAxisSize.min,
       children: [
         const Icon(
-          Icons.nfc,
+          Icons.check_circle,
           size: 50,
-          color: Colors.blue,
+          color: Colors.green,
         ),
         const SizedBox(height: 20),
         const Text(
@@ -314,7 +290,10 @@ class _ConfirmationsPageState extends State<ConfirmationsPage> {
       TextButton(
         onPressed: () {
           Navigator.of(context).pop();   
-          confirmationEntries.remove(selectedConfirmation);       
+          setState(() {
+            confirmationEntries.remove(selectedConfirmation);
+            selectedConfirmation = null;
+          });
         },
         child: const Text('Close'),
       ),

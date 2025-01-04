@@ -3,23 +3,23 @@ class Confirmation {
   final int token;
   final int userId;
   final String establishmentName;
-  final String usedAt;
+  final String createdAt;
 
   Confirmation({
     required this.id,
     required this.token,
     required this.userId,
     required this.establishmentName,
-    required this.usedAt,
+    required this.createdAt,
   });
 
   factory Confirmation.fromJson(Map<String, dynamic> json) {
     return Confirmation(
       id: json['id'],
-      token: json['token'],
+      token: json['tokenId'],
       userId: json['userId'],
       establishmentName: json['establishmentName'],
-      usedAt: json['usedAt'],
+      createdAt: json['createdAt'].toString().replaceAll('T', ' ').replaceAll('Z', ' ').split('.').first.substring(0, 19),
     );
   }
 
