@@ -24,9 +24,6 @@ class NfcController {
   }
 
   Future<void> onDetect(NfcTag tag, Function(bool) onWriteComplete) async {
-    print('NFC tag detected');
-    print(tag.data);
-    //TODO: Also make sure to save any cup information and remove other tokens from the cup
     try{
       //Write token id to the NFC tag, in overwrite mode
       NdefMessage message = NdefMessage([
