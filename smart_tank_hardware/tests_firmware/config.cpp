@@ -3,8 +3,8 @@
 #include "config.h"
 
 // WiFi Configuration
-const char* ssid = "Linkem_4ACACB";  
-const char* pass = "jqpyqvre";  
+const char* ssid = "Pixel_5345";  
+const char* pass = "ze_albano";  
 
 // Configuration of the broker MQTT
 const char* BROKER_IP = "95.94.45.83";

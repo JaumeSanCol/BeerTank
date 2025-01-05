@@ -43,7 +43,7 @@ float flowRate;
 unsigned long flowMilliLitres;
 unsigned long totalMilliLitres;
 unsigned long oldTime;
-float calibrationFactor = 4.5;
+float calibrationFactor = 3.85;
 
 //WIFI
 WiFiClient wifiClient;
@@ -141,7 +141,7 @@ void loop() {
     */
 
     // Legge i blocchi del tag
-    char tokenID[] = {'e','e','e','e'};
+    int tokenID[] = {'e','e','e','e'};
     for (byte block = 0; block < 5; block++) { // Legge solo i primi 4 blocchi
       byte buffer[18];
       byte size = sizeof(buffer);
@@ -164,34 +164,42 @@ void loop() {
             tokenID[i-(index+2)] = potentialDigit;
 
             if (isDigit(potentialDigit)) { 
-              tokenID[i-(index+2)] = potentialDigit;
+              tokenID[i-(index+2)] = atoi(&potentialDigit);
             }
           }
 
         }
       }
     }
-  
-    bool existsUID = true;  // = CompareUID(mfrc522.uid.uidByte, mfrc522.uid.size);
-    if (existsUID) {
-      digitalWrite(LED_PIN, HIGH);
+
+
+    for(int i = 0; i<4; i++){
+      Serial.print(String(tokenID[i]));
+      Serial.print(" - ");
+    }
+
+    int res = validateToken(httpsclient, tokenID[3]);
+    //int result = validateToken(httpsclient, tokenID[3]);
+    //Serial.println(tokenID[4]);
+    int result = 200;
+    digitalWrite(LED_PIN, HIGH);
+    delay(1000);
+    digitalWrite(LED_PIN, LOW);
+    delay(1000);
+    digitalWrite(LED_PIN, HIGH);
+    delay(1000);
+    digitalWrite(LED_PIN, LOW);
+    delay(1000);
+    if (result == 200) {
       digitalWrite(VALVE_PIN, HIGH);
       Serial.println("VALVE ACTIVATED");
 
       isPouring = true;
     }
 
-    int result = validateToken(httpsclient, 1);
-    Serial.println(result);
-
     mfrc522.PICC_HaltA(); // Ferma la comunicazione con la carta
 
     // Stampa solo la cifra trovata, se esiste
-    for(int i = 0; i<4; i++){
-      Serial.print(tokenID[i]);
-      Serial.print(" - ");
-    }
-    Serial.println();
 
   }
 
