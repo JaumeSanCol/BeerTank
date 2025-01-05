@@ -27,17 +27,20 @@ int validateToken(WiFiClientSecure& client, int tokenId) {
         break;
       }
     }
-  
+
     String response = client.readString();
     //Serial.println(response);
-    JsonDocument doc;
-    deserializeJson(doc, response);
-    //int value = doc['requestId'];
-    int value3 = 3;
-    urlReq += String(value3);
 
-    Serial.println(urlReq);
-  } else {
+    int start=response.indexOf("\"requestId\":");
+    int finish=response.indexOf("}");
+    String id = response.substring(start+12, finish);
+    //Serial.print("ID:");
+    //Serial.println(id);
+    //Serial.println(response.length());
+    urlReq+=id;
+}
+    
+  else {
     Serial.println(F("Connection to webserver was NOT successful"));
     client.stop();
     return code;
@@ -46,7 +49,7 @@ int validateToken(WiFiClientSecure& client, int tokenId) {
   client.stop();
 
   unsigned long startTime = millis();
-  int timeout = 3000000; // 30 seconds
+  int timeout = 1200000; // 30 seconds
 
   while (millis() - startTime < timeout) {
     Serial.println("Checking response...");
@@ -66,10 +69,10 @@ int validateToken(WiFiClientSecure& client, int tokenId) {
       }
 
       String response = client.readString();
-      Serial.println(response);
+      //Serial.println(response);
 
-      if (response.indexOf("\"valid\":true") != -1) {
-        Serial.println(F("Positive response received!"));
+      if (response.indexOf("\"status\":\"Approved\"") != -1) {
+        //Serial.println(F("Positive response received!"));
         code = 200;
         break;
       }
@@ -81,7 +84,7 @@ int validateToken(WiFiClientSecure& client, int tokenId) {
     }
 
     client.stop();
-    delay(30000);
+    delay(5000);
   }
 
   return code;
