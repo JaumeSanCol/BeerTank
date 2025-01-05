@@ -35,7 +35,7 @@ void loop() {
     // // PUBLISH VALUES
     // publishValues(client, TOPIC_LEVEL, String(x));
 
-    int result= validateToken(httpsclient, 1);
+    int result= validateToken(httpsclient, 9);
     Serial.println(result);
   }
 }

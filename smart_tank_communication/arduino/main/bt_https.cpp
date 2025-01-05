@@ -27,20 +27,16 @@ int validateToken(WiFiClientSecure& client, int tokenId) {
         break;
       }
     }
-
+  
     String response = client.readString();
-    int requestIdIndex = response.indexOf("\"requestId\"");
-    if (requestIdIndex != -1) {
-      int colonIndex = response.indexOf(":", requestIdIndex);
-      if (colonIndex != -1) {
-        int commaIndex = response.indexOf(",", colonIndex);
-        String requestIdValue = response.substring(colonIndex + 1, commaIndex);
-        requestIdValue.trim();
-        urlReq += requestIdValue;
-        //Serial.println(urlReq);
-      }
+    //Serial.println(response);
+    JsonDocument doc;
+    deserializeJson(doc, response);
+    //int value = doc['requestId'];
+    int value3 = 3;
+    urlReq += String(value3);
 
-    }
+    Serial.println(urlReq);
   } else {
     Serial.println(F("Connection to webserver was NOT successful"));
     client.stop();
@@ -50,12 +46,12 @@ int validateToken(WiFiClientSecure& client, int tokenId) {
   client.stop();
 
   unsigned long startTime = millis();
-  int timeout = 30000; // 30 seconds
+  int timeout = 3000000; // 30 seconds
 
   while (millis() - startTime < timeout) {
     Serial.println("Checking response...");
     if (client.connect(server, 443)) {
-      client.println("POST " + urlReq + " HTTP/1.1");
+      client.println("GET " + urlReq + " HTTP/1.1");
       client.println("Host: " + String(server));
       client.println("special-key: arduinoUser");
       client.println("Content-Type: application/json");
@@ -70,6 +66,7 @@ int validateToken(WiFiClientSecure& client, int tokenId) {
       }
 
       String response = client.readString();
+      Serial.println(response);
 
       if (response.indexOf("\"valid\":true") != -1) {
         Serial.println(F("Positive response received!"));
@@ -84,7 +81,7 @@ int validateToken(WiFiClientSecure& client, int tokenId) {
     }
 
     client.stop();
-    delay(5000);
+    delay(30000);
   }
 
   return code;
