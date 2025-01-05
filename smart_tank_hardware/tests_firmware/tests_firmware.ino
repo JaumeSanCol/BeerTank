@@ -173,8 +173,8 @@ void loop() {
     }
 
 
-    serial.print("Token: ");
-    Serial.prtinln(String(atoi(tokenID))
+    Serial.print("Token: ");
+    Serial.println(String(atoi(tokenID)));
     int result = validateToken(httpsclient, atoi(tokenID));
     //int result = 200;
     digitalWrite(LED_PIN, HIGH);
