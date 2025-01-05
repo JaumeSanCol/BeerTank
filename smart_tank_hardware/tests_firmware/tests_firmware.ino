@@ -141,7 +141,7 @@ void loop() {
     */
 
     // Legge i blocchi del tag
-    int tokenID[] = {'e','e','e','e'};
+    char tokenID[] = {'e','e','e','e'};
     for (byte block = 0; block < 5; block++) { // Legge solo i primi 4 blocchi
       byte buffer[18];
       byte size = sizeof(buffer);
@@ -164,7 +164,7 @@ void loop() {
             tokenID[i-(index+2)] = potentialDigit;
 
             if (isDigit(potentialDigit)) { 
-              tokenID[i-(index+2)] = atoi(&potentialDigit);
+              tokenID[i-(index+2)] = potentialDigit;
             }
           }
 
@@ -173,23 +173,27 @@ void loop() {
     }
 
 
-    for(int i = 0; i<4; i++){
-      Serial.print(String(tokenID[i]));
-      Serial.print(" - ");
-    }
-
-    int res = validateToken(httpsclient, tokenID[3]);
-    //int result = validateToken(httpsclient, tokenID[3]);
-    //Serial.println(tokenID[4]);
-    int result = 200;
+    serial.print("Token: ");
+    Serial.prtinln(String(atoi(tokenID))
+    int result = validateToken(httpsclient, atoi(tokenID));
+    //int result = 200;
     digitalWrite(LED_PIN, HIGH);
-    delay(1000);
+    delay(500);
     digitalWrite(LED_PIN, LOW);
-    delay(1000);
+    delay(500);
     digitalWrite(LED_PIN, HIGH);
-    delay(1000);
+    delay(500);
     digitalWrite(LED_PIN, LOW);
-    delay(1000);
+    delay(500);
+    digitalWrite(LED_PIN, HIGH);
+    delay(500);
+    digitalWrite(LED_PIN, LOW);
+    delay(500);
+    digitalWrite(LED_PIN, HIGH);
+    delay(500);
+    digitalWrite(LED_PIN, LOW);
+    delay(500);
+    digitalWrite(LED_PIN, HIGH);
     if (result == 200) {
       digitalWrite(VALVE_PIN, HIGH);
       Serial.println("VALVE ACTIVATED");
