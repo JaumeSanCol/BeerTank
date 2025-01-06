@@ -17,6 +17,7 @@
 #define RST_PIN 9  // RES pin
 #define SS_PIN 10  // SDA (SS) pin
 #define LED_PIN 6
+#define LEDY_PIN 7
 #define VALVE_PIN 4
 #define FLUX_PIN 3
 #define DHT11_PIN 5
@@ -43,7 +44,7 @@ float flowRate;
 unsigned long flowMilliLitres;
 unsigned long totalMilliLitres;
 unsigned long oldTime;
-float calibrationFactor = 3.85;
+float calibrationFactor = 3.7;
 
 //WIFI
 WiFiClient wifiClient;
@@ -54,6 +55,7 @@ void setup() {
 
   Serial.begin(9600);
   pinMode(LED_PIN, OUTPUT);
+  pinMode(LEDY_PIN, OUTPUT);
   pinMode(FLUX_PIN, INPUT_PULLUP);
   pinMode(VALVE_PIN, OUTPUT);
   pinMode(LED_BUILTIN, OUTPUT);
@@ -175,8 +177,12 @@ void loop() {
 
     Serial.print("Token: ");
     Serial.println(String(atoi(tokenID)));
+    digitalWrite(LEDY_PIN, HIGH);
+    //delay(5000);
     int result = validateToken(httpsclient, atoi(tokenID));
     //int result = 200;
+    
+    digitalWrite(LEDY_PIN, LOW);
     digitalWrite(LED_PIN, HIGH);
     delay(500);
     digitalWrite(LED_PIN, LOW);

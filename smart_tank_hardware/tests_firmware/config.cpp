@@ -3,8 +3,8 @@
 #include "config.h"
 
 // WiFi Configuration
-const char* ssid = "Pixel_5345";  
-const char* pass = "ze_albano";  
+const char* ssid = "Pixel_5345";// "OPPO Reno6 5G";  
+const char* pass = "ze_albano"; //"i5ivve57";  
 
 // Configuration of the broker MQTT
 const char* BROKER_IP = "95.94.45.83";
